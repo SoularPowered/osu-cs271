@@ -8,6 +8,10 @@ TITLE Programming Assignment 1    (project01.asm)
 ;	3. Prompt the user to enter two numbers.
 ;	4. Calculate the sum, difference, product, (integer) quotient and remainder of the numbers.
 ;	5. Display a terminating message.
+; Extra-credit options:
+; 	1. Repeat until the user chooses to quit.
+; 	2. Validate the second number to be less than the first.
+; 	3. Calculate and display the quotient as a floating-point number, rounded to the nearest .001.
 
 INCLUDE Irvine32.inc
 
@@ -15,32 +19,36 @@ INCLUDE Irvine32.inc
 
 ; Strings for printing intro / instructions / exit message to output
 
-	programTitle  BYTE	"Programming Assignment 1, ",0
-	myName        BYTE	"Created by Shawn Hillyer",0
-	instruct_1		BYTE	"Please enter two integers. Program will calculate and display the sum, ",0
-	instruct_2		BYTE	"difference, product, quotient, and remainder for you.",0
-	exitMsg				BYTE	"Thank's for joining me... see you next time.",0
-	promptVal_1		BYTE	"Enter the first value (operand): ",0
-	promptVal_2		BYTE	"Enter the second value (operand): ",0
+	programTitle 	BYTE	"Programming Assignment 1, ",0
+	myName		BYTE	"Created by Shawn Hillyer",0
+	instruct_1	BYTE	"Please enter two integers. Program will calculate and display the sum, ",0
+	instruct_2	BYTE	"difference, product, quotient, and remainder for you.",0
+	exitMsg		BYTE	"Thank's for joining me... see you next time.",0
+	promptVal_1	BYTE	"Enter the first value (operand): ",0
+	promptVal_2	BYTE	"Enter the second value (operand): ",0
+	ecIntro_1	BYTE	"**EC: Program repeats until user chooses to quit.",0
+	ecIntro_2	BYTE	"**EC: Program Validates the second number to be less than the first.",0
+	ecIntro_3	BYTE	"**EC: Calculate and display the quotient as a floating-point number, rounded to the nearest .001.",0
 
 ; Strings and characters for printing results
-	sumMsg				BYTE	"The sum is: ",0
+	sumMsg		BYTE	"The sum is: ",0
 	differenceMsg	BYTE	"The difference is: ",0
-	productMsg		BYTE	"The product is: ",0
-	quotientMsg		BYTE	"The integer quotient is: ",0
+	productMsg	BYTE	"The product is: ",0
+	quotientMsg	BYTE	"The integer quotient is: ",0
 	remainderMsg	BYTE	"The remainder of division is: ",0
 
 
-.data?		; Uninitialized data in .data? makes program smaller
+.data?
 
 ; Variables for holding the two user-input values and the results of calculations
-	value_1			DWORD	?	; First value entered by user
-	value_2			DWORD	?	; Second value entered by user
-	sum					DWORD	?	; store the sum of value_1 + value_2
+
+	value_1		DWORD	?	; First value entered by user
+	value_2		DWORD	?	; Second value entered by user
+	sum		DWORD	?	; store the sum of value_1 + value_2
 	difference	DWORD	?	; store the difference of value_1 - value_2
-	product			DWORD	?	; store the product of value_1 * value_2
-	quotient		DWORD	?	; store the integer quotient of value_1 / value_2
-	remainder		DWORD	?	; store the remainder of value_1 / value_2
+	product		DWORD	?	; store the product of value_1 * value_2
+	quotient	DWORD	?	; store the integer quotient of value_1 / value_2
+	remainder	DWORD	?	; store the remainder of value_1 / value_2
 
 
 .code
