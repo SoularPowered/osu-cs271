@@ -55,9 +55,9 @@ INCLUDE Irvine32.inc
 main PROC
 
 ; introduce program + programmer
-	mov		edx, OFFSET programTitle
+	mov	edx, OFFSET programTitle
 	call	WriteString
-	mov		edx, OFFSET myName
+	mov	edx, OFFSET myName
 	call	WriteString
 	call	CrLf
 
@@ -65,15 +65,15 @@ main PROC
 ; get two values, value_1 and value_2, from the user
 
 	; print instructions
-		mov		edx, OFFSET instruct_1
+		mov	edx, OFFSET instruct_1
 		call	WriteString
 		call	CrLf
-		mov		edx, OFFSET instruct_2
+		mov	edx, OFFSET instruct_2
 		call	WriteString
 		call	CrLf
 
 	; print prompt for value_1
-		mov		edx, OFFSET promptVal_1
+		mov	edx, OFFSET promptVal_1
 		call	WriteString
 		call	CrLf
 
@@ -82,7 +82,7 @@ main PROC
 		mov value_1, eax
 
 	; print prompt for value_2
-		mov		edx, OFFSET promptVal_2
+		mov	edx, OFFSET promptVal_2
 		call	WriteString
 		call	CrLf
 
@@ -94,68 +94,68 @@ main PROC
 ; calculate the required values
 
 	; Calculate the sum
-		mov 	eax,value_1		; move value_1 into EAX and add value_2
+		mov 	eax,value_1
 		add 	eax,value_2
-		mov 	sum,eax			; store the result in sum
+		mov 	sum,eax
 
 	; Calculate the difference
-		mov 	eax,value_1		; move value_1 into EAX and subtract value_2
+		mov 	eax,value_1
 		sub 	eax,value_2
-		mov 	difference,eax	; store the result in difference
+		mov 	difference,eax
 
 	; Calculate the product
-		mov 	eax,value_1		; move value_1 into EAX and subtract value_2
+		mov 	eax,value_1
 		mul 	value_2
-		mov 	product,eax	; store the result in product
+		mov 	product,eax
 
-	; Calculate the integer quotient
-		mov 	eax, value_1		; Divisor goes in eax
-		cdq	                	; "conver doubleword to quadword"
-		mov 	ebx, value_2			; Dividend goes in ebx
-		div 	ebx           	; Divide ebx by ebx
-		mov 	quotient, eax		; quotient ends up in eax
-		mov 	remainder, edx 	; Remainder ends up in edx
+	; Calculate the integer quotient (eax is divsor, ebx is dividend)
+		mov 	eax, value_1	
+		cdq	               	; zero-extend edx
+		mov 	ebx, value_2
+		div 	ebx
+		mov 	quotient, eax
+		mov 	remainder, edx
 
 ; display the results
-	; print sumMsg and sum
-		mov		edx, OFFSET sumMsg
+	; Print sum to screen with message
+		mov	edx, OFFSET sumMsg
 		call	WriteString
-		mov		eax, sum
+		mov	eax, sum
 		call	WriteDec
 		call	CrLf
 
-	; print differenceMsg and difference
-		mov		edx, OFFSET differenceMsg
+	; Print difference to screen with message
+		mov	edx, OFFSET differenceMsg
 		call	WriteString
-		mov		eax, difference
+		mov	eax, difference
 		call	WriteDec
 		call	CrLf
 
-	; print productMsg and product
-		mov		edx, OFFSET productMsg
+	; Print product to screen with message
+		mov	edx, OFFSET productMsg
 		call	WriteString
-		mov		eax, product
+		mov	eax, product
 		call	WriteDec
 		call	CrLf
 
-	; print quotientMsg and quotient
-		mov		edx, OFFSET quotientMsg
+	; Print quotient to screen with message
+		mov	edx, OFFSET quotientMsg
 		call	WriteString
-		mov		eax, quotient
+		mov	eax, quotient
 		call	WriteDec
 		call	CrLf
 
-	; print remainderMsg and remainder
-		mov		edx, OFFSET remainderMsg
+	; Print remainder to screen with message
+		mov	edx, OFFSET remainderMsg
 		call	WriteString
-		mov		eax, remainder
+		mov	eax, remainder
 		call	WriteDec
 		call	CrLf
 
 ; say goodbye
 	; print exitMsg
-		mov		edx, OFFSET exitMsg
-		call WriteString
+		mov	edx, OFFSET exitMsg
+		call 	WriteString
 		call 	CrLf
 
 	exit	; exit to operating system
