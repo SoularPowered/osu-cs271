@@ -9,28 +9,30 @@ TITLE Programming Assignment 1    (project01.asm)
 ;	4. Calculate the sum, difference, product, (integer) quotient and remainder of the numbers.
 ;	5. Display a terminating message.
 ; Extra-credit options:
-; 	1. Repeat until the user chooses to quit.
-; 	2. Validate the second number to be less than the first.
+; 	1. Repeat until the user chooses to quit. [Implemented]
+; 	2. Validate the second number to be less than the first. [Implemented]
 ; 	3. Calculate and display the quotient as a floating-point number, rounded to the nearest .001.
 
 INCLUDE Irvine32.inc
 
 .data
 
-; Strings for printing intro / instructions / exit message to output
+; Strings & characters for printing intro / instructions / exit message to output
 
 	programTitle 	BYTE	"Programming Assignment 1, ",0
 	myName		BYTE	"Created by Shawn Hillyer",0
 	instruct_1	BYTE	"Please enter two integers. Program will calculate and display the sum, ",0
 	instruct_2	BYTE	"difference, product, quotient, and remainder for you.",0
 	exitMsg		BYTE	"Thank's for joining me... see you next time.",0
-	promptVal_1	BYTE	"Enter the first value (operand): ",0
-	promptVal_2	BYTE	"Enter the second value (operand): ",0
+	promptVal_1	BYTE	"Enter the first value (must be > second value): ",0
+	promptVal_2	BYTE	"Enter the second value (must be < first value): ",0
 	ecIntro_1	BYTE	"**EC: Program repeats until user chooses to quit.",0
 	ecIntro_2	BYTE	"**EC: Program Validates the second number to be less than the first.",0
 	ecIntro_3	BYTE	"**EC: Calculate and display the quotient as a floating-point number, rounded to the nearest .001.",0
 	repeatMsg	BYTE	"Enter Q to quit or C to continue.",0
 	promptError	BYTE	"You must enter Q or C!",0
+	valueError	BYTE	"The first value must be greater than the second value.",0
+	
 	quit		BYTE	'Q'	; Quit value
 	continue	BYTE	'C'	; Continue value
 
@@ -42,6 +44,7 @@ INCLUDE Irvine32.inc
 	productMsg	BYTE	"The product is: ",0
 	quotientMsg	BYTE	"The integer quotient is: ",0
 	remainderMsg	BYTE	"The remainder of division is: ",0
+
 
 
 .data?
@@ -56,6 +59,8 @@ INCLUDE Irvine32.inc
 	quotient	DWORD	?	; store the integer quotient of value_1 / value_2
 	remainder	DWORD	?	; store the remainder of value_1 / value_2
 	loopResponse	BYTE	?	; store user response if they wish to quit or continue
+
+
 
 .code
 main PROC
@@ -96,8 +101,13 @@ MAINLOOP:
 	; get input value_2
 		call	ReadDec
 		mov 	value_2, eax
-
-
+		
+; **EC: 2. Validate the second number to be less than the first.
+	; if value_2 > value_1, Jump to QUITPROMPT that controls main program loop
+		mov 	eax, value_2
+		cmp	eax, value_1
+		jg	VALUEERROR
+	
 ; calculate the required values
 
 	; Calculate the sum
@@ -117,7 +127,7 @@ MAINLOOP:
 
 	; Calculate the integer quotient (eax is divsor, ebx is dividend)
 		mov 	eax, value_1	
-		cdq	               	; zero-extend edx
+		cdq	               	; zero-extends eax into edx
 		mov 	ebx, value_2
 		div 	ebx
 		mov 	quotient, eax
@@ -158,10 +168,12 @@ MAINLOOP:
 		mov	eax, remainder
 		call	WriteDec
 		call	CrLf
+		
+
+; **EC: 1. Repeat until the user chooses to quit.
 
 QUITPROMPT:
-; Prompt user if they wish to (Q)uit or (C)ontinue
-	; Print prompt
+	; Prompt user if they wish to (Q)uit or (C)ontinue 
 		mov	edx, OFFSET repeatMsg
 		call	WriteString
 		call 	CrLf
@@ -178,11 +190,20 @@ QUITPROMPT:
 	; Compare response to quit ('Q') and jump to GOODBYE label if matches (Page 197+ of Irvine)
 		cmp	response,quit		
 		jz	GOODBYE
+		
 	; Print error message if Q or C is not entered and repeat prompt
 		mov	edx, OFFSET promptError
 		call	WriteString
 		call 	CrLf
 		jmp	QUITPROMPT
+
+; Jump here from MAINLOOP if value_2 > value_1
+VALUEERROR:
+	; Print error message that value_2 must be less than value_1, jump to reprompt
+		mov	edx, OFFSET valueError
+		call	WriteString
+		call	CrLf
+		jmp	MAINLOOP
 
 ; say goodbye
 GOODBYE:
