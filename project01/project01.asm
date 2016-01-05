@@ -29,6 +29,12 @@ INCLUDE Irvine32.inc
 	ecIntro_1	BYTE	"**EC: Program repeats until user chooses to quit.",0
 	ecIntro_2	BYTE	"**EC: Program Validates the second number to be less than the first.",0
 	ecIntro_3	BYTE	"**EC: Calculate and display the quotient as a floating-point number, rounded to the nearest .001.",0
+	repeatMsg	BYTE	"Enter Q to quit or C to continue.",0
+	promptError	BYTE	"You must enter Q or C!",0
+	quit		BYTE	'Q'	; Quit value
+	continue	BYTE	'C'	; Continue value
+
+	
 
 ; Strings and characters for printing results
 	sumMsg		BYTE	"The sum is: ",0
@@ -49,7 +55,7 @@ INCLUDE Irvine32.inc
 	product		DWORD	?	; store the product of value_1 * value_2
 	quotient	DWORD	?	; store the integer quotient of value_1 / value_2
 	remainder	DWORD	?	; store the remainder of value_1 / value_2
-
+	loopResponse	BYTE	?	; store user response if they wish to quit or continue
 
 .code
 main PROC
@@ -61,6 +67,7 @@ main PROC
 	call	WriteString
 	call	CrLf
 
+MAINLOOP:
 
 ; get two values, value_1 and value_2, from the user
 
@@ -78,7 +85,7 @@ main PROC
 		call	CrLf
 
 	; get input value_1
-		call	Readdec
+		call	ReadDec
 		mov value_1, eax
 
 	; print prompt for value_2
@@ -87,7 +94,7 @@ main PROC
 		call	CrLf
 
 	; get input value_2
-		call	Readdec
+		call	ReadDec
 		mov 	value_2, eax
 
 
@@ -152,13 +159,40 @@ main PROC
 		call	WriteDec
 		call	CrLf
 
+QUITPROMPT:
+; Prompt user if they wish to (Q)uit or (C)ontinue
+	; Print prompt
+		mov	edx, OFFSET repeatMsg
+		call	WriteString
+		call 	CrLf
+	
+	; Get response, convert to uppercase by clearing bit 5 (Page 192 of Irvine)
+		call 	ReadChar
+		mov 	response, al
+		and 	response, 11011111b	
+	
+	; Compare response to continue ('C') and jump to MAINLOOP label if matches (Page 197+ of Irvine)
+		cmp	response,continue	; ZF=1,CF=0 if response==source with unsigned operands
+		jz	MAINLOOP
+	
+	; Compare response to quit ('Q') and jump to GOODBYE label if matches (Page 197+ of Irvine)
+		cmp	response,quit		
+		jz	GOODBYE
+	; Print error message if Q or C is not entered and repeat prompt
+		mov	edx, OFFSET promptError
+		call	WriteString
+		call 	CrLf
+		jmp	QUITPROMPT
+
 ; say goodbye
+GOODBYE:
 	; print exitMsg
 		mov	edx, OFFSET exitMsg
 		call 	WriteString
 		call 	CrLf
-
-	exit	; exit to operating system
+		
+	; exit to operating system
+		exit	
 main ENDP
 
 END main
