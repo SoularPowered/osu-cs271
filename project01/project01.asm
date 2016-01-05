@@ -11,9 +11,6 @@ TITLE Programming Assignment 1    (project01.asm)
 
 INCLUDE Irvine32.inc
 
-; (insert constant definitions here)
-
-
 .data
 
 ; Strings for printing intro / instructions / exit message to output
@@ -49,7 +46,6 @@ INCLUDE Irvine32.inc
 .code
 main PROC
 
-
 ; introduce program + programmer
 	mov		edx, OFFSET programTitle
 	call	WriteString
@@ -57,92 +53,104 @@ main PROC
 	call	WriteString
 	call	CrLf
 
-; get the data
-	; print instructions
-	mov		edx, OFFSET instruct_1
-	call	WriteString
-	call	CrLf
-	mov		edx, OFFSET instruct_2
-	call	WriteString
-	call	CrLf
 
-	; print promptVal1
-	mov		edx, OFFSET promptVal_1
-	call	WriteString
-	call	CrLf
+; get two values, value_1 and value_2, from the user
+
+	; print instructions
+		mov		edx, OFFSET instruct_1
+		call	WriteString
+		call	CrLf
+		mov		edx, OFFSET instruct_2
+		call	WriteString
+		call	CrLf
+
+	; print prompt for value_1
+		mov		edx, OFFSET promptVal_1
+		call	WriteString
+		call	CrLf
 
 	; get input value_1
+		call	Readdec
+		mov value_1, eax
 
-	; print promptVal2
-	mov		edx, OFFSET promptVal_2
-	call	WriteString
-	call	CrLf
+	; print prompt for value_2
+		mov		edx, OFFSET promptVal_2
+		call	WriteString
+		call	CrLf
 
 	; get input value_2
+		call	Readdec
+		mov 	value_2, eax
 
 
 ; calculate the required values
 
 	; Calculate the sum
-		MOV 	eax,value_1		; move value_1 into EAX and add value_2
-		ADD 	eax,value_2
-		MOV 	sum,eax			; store the result in sum
+		mov 	eax,value_1		; move value_1 into EAX and add value_2
+		add 	eax,value_2
+		mov 	sum,eax			; store the result in sum
 
 	; Calculate the difference
-		MOV 	eax,value_1		; move value_1 into EAX and subtract value_2
-		SUB 	eax,value_2
-		MOV 	difference,eax	; store the result in difference
+		mov 	eax,value_1		; move value_1 into EAX and subtract value_2
+		sub 	eax,value_2
+		mov 	difference,eax	; store the result in difference
 
 	; Calculate the product
-		MOV 	eax,value_1		; move value_1 into EAX and subtract value_2
-		; MUL eax,value_2
-		MOV 	product,eax	; store the result in difference
+		mov 	eax,value_1		; move value_1 into EAX and subtract value_2
+		mul 	value_2
+		mov 	product,eax	; store the result in product
+
+	; Calculate the integer quotient
+		mov 	eax, value_1		; Divisor goes in eax
+		cdq	                	; "conver doubleword to quadword"
+		mov 	ebx, value_2			; Dividend goes in ebx
+		div 	ebx           	; Divide ebx by ebx
+		mov 	quotient, eax		; quotient ends up in eax
+		mov 	remainder, edx 	; Remainder ends up in edx
 
 ; display the results
 	; print sumMsg and sum
-	mov		edx, OFFSET sumMsg
-	call	WriteString
-	mov		eax, sum
-	call	WriteInt
-	call	CrLf
+		mov		edx, OFFSET sumMsg
+		call	WriteString
+		mov		eax, sum
+		call	WriteDec
+		call	CrLf
 
 	; print differenceMsg and difference
-	mov		edx, OFFSET differenceMsg
-	call	WriteString
-	mov		eax, difference
-	call	WriteInt
-	call	CrLf
+		mov		edx, OFFSET differenceMsg
+		call	WriteString
+		mov		eax, difference
+		call	WriteDec
+		call	CrLf
 
 	; print productMsg and product
-	mov		edx, OFFSET productMsg
-	call	WriteString
-	mov		eax, product
-	call	WriteInt
-	call	CrLf
+		mov		edx, OFFSET productMsg
+		call	WriteString
+		mov		eax, product
+		call	WriteDec
+		call	CrLf
 
 	; print quotientMsg and quotient
-	mov		edx, OFFSET quotientMsg
-	call	WriteString
-	mov		eax, quotient
-	call	WriteInt
-	call	CrLf
+		mov		edx, OFFSET quotientMsg
+		call	WriteString
+		mov		eax, quotient
+		call	WriteDec
+		call	CrLf
 
 	; print remainderMsg and remainder
-	mov		edx, OFFSET remainderMsg
-	call	WriteString
-	mov		eax, remainder
-	call	WriteInt
-	call	CrLf
+		mov		edx, OFFSET remainderMsg
+		call	WriteString
+		mov		eax, remainder
+		call	WriteDec
+		call	CrLf
 
 ; say goodbye
 	; print exitMsg
-	mov		edx, OFFSET exitMsg
-	call WriteString
-	call 	CrLf
+		mov		edx, OFFSET exitMsg
+		call WriteString
+		call 	CrLf
 
 	exit	; exit to operating system
 main ENDP
-
-; (insert additional procedures here)
 
 END main
