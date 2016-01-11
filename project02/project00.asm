@@ -129,11 +129,13 @@ main PROC
 ; c. getUserData      *
 ; *********************
 
-START_USER_DATA:
-
-; Get user input
+; Print prompt
 	mov 	edx, OFFSET fib_prompt
 	call	WriteString
+
+; Get user input
+
+START_USER_DATA:  ; post-test loop (reads in the int before looping)
 	call	ReadInt
 	mov	nth_fib, eax
 	
@@ -169,7 +171,7 @@ END_USER_DATA:
 ; d. displayFibs      *
 ; *********************
 
-; Set up various loop-related counters
+; Set up various loop control variables & counters
 	mov 	ecx, nth_fib		; for FIB_SEQUENCE loop
 	mov 	current_term, 1		; the current term of the fib seq
 	mov	fib_1, 1		; nth fibonnaci - 1 (1 prior to current term)
