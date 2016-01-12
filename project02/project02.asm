@@ -88,6 +88,8 @@ main PROC
 ; a. introduction     *
 ; *********************
 
+	call Clrscr
+
 ; Print Program Title and Programmer's Name
 	mov		edx, OFFSET intro
 	call 	WriteString 
@@ -163,6 +165,8 @@ START_USER_DATA:  ; post-test loop (reads in the int before looping)
 	mov 	edx, OFFSET okay_msg
 	call	WriteString
 	call	CrLf
+	call	WaitMsg
+	call	clrscr
 	jmp 	END_USER_DATA
 
 
