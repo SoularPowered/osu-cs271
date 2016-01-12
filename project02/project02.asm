@@ -37,7 +37,7 @@ INCLUDE Irvine32.inc
 ; *********************
 
 MAX_FIB TEXTEQU <46>
-COL_DIST = 14
+COL_DIST = 16
 
 ; *********************
 ; .data: Variables    *
@@ -48,6 +48,7 @@ COL_DIST = 14
 ; Strings - Output
 	intro			BYTE	"Fibonacci Numbers",0
 	programmer		BYTE	"by Shawn S Hillyer",0
+	ecIntro_1		BYTE	"**EC: Displays the numbers in aligned columns.",0
 	name_prompt		BYTE	"What is your name?",0
 	greeting		BYTE	"Hello, ",0
 	
@@ -81,7 +82,6 @@ COL_DIST = 14
 ; +--------------------+
 ; |     MoveCursor     |
 ; +--------------------+
-
 MoveCursor	PROC
 ; Move cursor and then increment col for next pass
 	mov		al, col
@@ -135,6 +135,11 @@ main PROC
 	mov		edx, OFFSET programmer
 	call 	WriteString 
 	call 	CrLf
+
+; Extra Credit 1 Implemented message
+	mov		edx, OFFSET ecIntro_1
+	call	WriteString
+	call	CrLf
 	call	CrLf
 
 ; Prompt for and Get the user's name as a string
