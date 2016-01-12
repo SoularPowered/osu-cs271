@@ -46,30 +46,34 @@ MAX_FIB TEXTEQU <46>
 .data
 
 ; Strings - Output
-	intro		BYTE	"Fibonacci Numbers",0
-	programmer	BYTE	"by Shawn S Hillyer",0
-	name_prompt	BYTE	"What’s your name?",0
-	greeting	BYTE	"Hello, ",0
+	intro			BYTE	"Fibonacci Numbers",0
+	programmer		BYTE	"by Shawn S Hillyer",0
+	name_prompt		BYTE	"What is your name?",0
+	greeting		BYTE	"Hello, ",0
 	
 	instructions1	BYTE	"Enter the number of Fibonacci terms to be displayed",0
-	instructions2	BYTE	"Give the number as an integer in the range [1 .. MAX_FIB].",0
-	fib_prompt	BYTE	"How many Fibonacci terms do you want?",0
-	okay_msg	BYTE	"Thanks. Printing the sequence next...",0
-	err_range	BYTE	"Out of range. Enter a number in [1 .. MAX_FIB]",0
-	spaces		BYTE	5 DUP(" "),0
+	instructions2	BYTE	"Give the number as an integer in the range [1 .. ",0
+	range_end		BYTE	"].",0
+	fib_prompt		BYTE	"How many Fibonacci terms do you want?",0
+	okay_msg		BYTE	"Thanks. Printing the sequence next...",0
+	err_range		BYTE	"Out of range. Enter a number in [1 ..",0
+	spaces			BYTE	5 DUP(" "),0
 
-	goodbye1	BYTE	"It's pronounced fee-boh-NOT-shee!",0
-	goodbye2	BYTE	"Goodbye, ",0
+	goodbye1		BYTE	"It's pronounced fee-boh-NOT-shee!",0
+	goodbye2		BYTE	"Goodbye, ",0
 
 ; Strings - Input
-	user_name	BYTE 30 DUP(0)	; input buffer
+	user_name		BYTE	30 DUP(0)	; input buffer
 
 ; Fibonnaci variables
-	fib_first	DWORD 1
-	fib_second	DWORD 1
-	this_term	DWORD ?
-	nth_fib		DWORD ?
+	fib_1			DWORD 1
+	fib_2			DWORD 1
+	current_term	DWORD ?
+	current_fib		DWORD ?
+	nth_fib			DWORD ?
 
+; Other variables
+	line_count		DWORD 0;
 
 
 .code
@@ -85,30 +89,31 @@ main PROC
 ; *********************
 
 ; Print Program Title and Programmer's Name
-	mov	edx, OFFSET intro
+	mov		edx, OFFSET intro
 	call 	WriteString 
 	call 	CrLf
 
-	mov	edx, OFFSET programmer
+	mov		edx, OFFSET programmer
 	call 	WriteString 
 	call 	CrLf
-
+	call	CrLf
 
 ; Prompt for and Get the user's name as a string
-	mov	edx, OFFSET name_prompt
+	mov		edx, OFFSET name_prompt
 	call 	WriteString 
 	call 	CrLf
 
-	mov	edx, OFFSET user_name
-	mov	ecx, SIZOEF user_name
+	mov		edx, OFFSET user_name
+	mov		ecx, SIZEOF user_name
 	call	ReadString
 	
 ; Greet the user
-	mov	edx, OFFSET greeting
+	mov		edx, OFFSET greeting
 	call 	WriteString 
-	mov	edx, OFFSET user_name
+	mov		edx, OFFSET user_name
 	call 	WriteString 
 	call 	CrLf
+	call	CrLf
 
 
 ; *********************
@@ -116,14 +121,19 @@ main PROC
 ; *********************
 
 ; Print description of what program will do
-	mov	edx, OFFSET instructions1
+	mov		edx, OFFSET instructions1
 	call 	WriteString 
 	call 	CrLf
 
 ; Print instructions
-	mov	edx, OFFSET instructions2
+	mov		edx, OFFSET instructions2
+	call 	WriteString 
+	mov		eax, MAX_FIB;
+	call	WriteDec
+	mov		edx, OFFSET range_end
 	call 	WriteString 
 	call 	CrLf
+	call	CrLf
 
 ; *********************
 ; c. getUserData      *
@@ -132,33 +142,34 @@ main PROC
 ; Print prompt
 	mov 	edx, OFFSET fib_prompt
 	call	WriteString
+	call	CrLf
 
 ; Get user input
 
 START_USER_DATA:  ; post-test loop (reads in the int before looping)
 	call	ReadInt
-	mov	nth_fib, eax
+	mov		nth_fib, eax
 	
 ; IF nth_fib < 1 || nth_fib > MAX_FIB print error message and prompt again
 	mov 	eax, nth_fib
 	
 	cmp 	eax, 1
-	jl 	OUT_OF_RANGE
+	jl 		OUT_OF_RANGE
 
 	cmp 	eax, MAX_FIB 
-	jg 	OUT_OF_RANGE
+	jg 		OUT_OF_RANGE
 
 ; ELSE print confirmation and jump over OUT_OF_RANGE to END_USER_DATA
-	mov 	eax, OFFSET okay_msg
+	mov 	edx, OFFSET okay_msg
 	call	WriteString
-
+	call	CrLf
 	jmp 	END_USER_DATA
 
 
 OUT_OF_RANGE:
 
 ; Print error message and jump back up
-	mov 	eax, OFFSET err_range
+	mov 	edx, OFFSET err_range
 	call	WriteString
 	jmp 	START_USER_DATA  	; loop through input and validation again
 
@@ -173,62 +184,66 @@ END_USER_DATA:
 
 ; Set up various loop control variables & counters
 	mov 	ecx, nth_fib		; for FIB_SEQUENCE loop
-	mov 	current_term, 1		; the current term of the fib seq
-	mov	fib_1, 1		; nth fibonnaci - 1 (1 prior to current term)
-	mov 	fib_2, 1		; nth fibonnaci - 2 (2 prior to current term)
-	mov	line_count, 0		; count of values printed on current line so far
+	mov 	current_term, 1		; the current term (the "nth" term) of the fib seq
+	mov		current_fib, 1		; the current fibonnaci number to print
+	mov		fib_1, 1			; nth fibonnaci - 1 (1 prior to current term)
+	mov 	fib_2, 1			; nth fibonnaci - 2 (2 prior to current term)
+	mov		line_count, 0		; count of values printed on current line so far
 
 FIB_SEQUENCE:	; repeats nth_fib times
 
 ; IF current_term > 2, jump over FIRST_TWO
-	mov	eax, current_term
-	cmp	eax, 2
-	jg	END_FIRST_TWO
+	mov		eax, current_term
+	cmp		eax, 2
+	jg		END_FIRST_TWO
 
 FIRST_TWO:
-; Print 1 for the base cases (n = 1 and n = 2) 	
-	mov	this_term, 1
-	mov 	eax, this_term
-	call	WriteDec
+; set current_term to 1 for the base cases (n = 1 and n = 2) 	
+	mov		current_fib, 1
+	jmp		END_ELSE
 
 END_FIRST_TWO:
 	
-; this_term = fib_1 + fib_2
+; current_fib = fib_1 + fib_2
 	mov 	eax, fib_1
-	add	eax, fib_2
-	mov	this_term, eax
+	add		eax, fib_2
+	mov		current_fib, eax
 
 ; fib_2 = fib_1
-	mov	eax, fib_1
-	mov	fib_2, eax
+	mov		eax, fib_1
+	mov		fib_2, eax
 
-; fib_1 = this_term
-	mov	eax, this_term
-	mov	fib_1, eax
+; fib_1 = current_fib
+	mov		eax, current_fib
+	mov		fib_1, eax
 
-; print this_term
-	mov	eax, this_term		; explicit in case I add code later
+END_ELSE: 
+
+; print current_fib
+	mov		eax, current_fib		; explicit in case I add code later
 	call	WriteDec
 
-; increment manual counters
-	inc	current_term
-	inc	line_count
+; Print 5 spaces
+	mov 	edx, OFFSET spaces
+	call	WriteString
 
-;  if line_count != 5, don't print a linebreak
+; increment manual counters
+	inc		current_term
+	inc		line_count
+
+;  if line_count == 5, print a linebreak
 	mov 	eax, line_count
 	cmp 	eax, 5
 	jne 	LINE_BREAK_END
 
 LINE_BREAK:
 	call 	CrLf
-	mov,	line_count, 0
+	mov		line_count, 0
 
 LINE_BREAK_END:
 
 
-; Print 5 spaces
-	mov 	edx, OFFSET spaces
-	call	WriteString
+
 
 	loop 	FIB_SEQUENCE
 
@@ -242,12 +257,12 @@ LINE_BREAK_END:
 	call 	CrLf
 	call 	CrLf
 
-	move 	edx, OFFSET goodbye1
-	call 	WriteLine
+	mov 	edx, OFFSET goodbye1
+	call 	WriteString
 	call 	CrLf
 	
-	move 	edx, OFFSET goodbye2
-	call 	WriteLine
+	mov 	edx, OFFSET goodbye2
+	call 	WriteString
 	call 	CrLf
 
 	exit	; exit to operating system  
