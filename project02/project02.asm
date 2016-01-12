@@ -1,8 +1,8 @@
 TITLE Programming Assignment 2    (project02.asm)
 
 ; ==========================================================================================================
-; Author: Shawn S Hillyer	Email: hillyers@oregonstate.edu
-; CS271-400 / Project ID: Programming Assignment 2	Due Date: 01/14/2016
+; Author: Shawn S Hillyer								Email: hillyers@oregonstate.edu
+; CS271-400 / Project ID: Programming Assignment 2		Due Date: 01/24/2016
 ; ==========================================================================================================
 ; [Description]  
 ; Write a program to calculate Fibonacci numbers.
@@ -36,8 +36,8 @@ INCLUDE Irvine32.inc
 ; Constants           *
 ; *********************
 
-MAX_FIB TEXTEQU <46>
-COL_DIST = 16
+MAX_FIB = 46	; highest fibonnaci sequence we can do
+COL_DIST = 16	; distance to put between first digit of numbers in each column
 
 ; *********************
 ; .data: Variables    *
