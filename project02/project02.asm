@@ -26,7 +26,7 @@ TITLE Programming Assignment 2    (project02.asm)
 ;	7. The usual requirements regarding documentation, readability, user-friendliness, etc., apply.
 ; ==========================================================================================================
 ; [Extra-credit options]
-; [Not Implemented]	1.  Display the numbers in aligned columns.
+; [Implemented]		1.  Display the numbers in aligned columns.
 ; [Not Implemented]	2.  Do something incredible.
 
 
@@ -37,7 +37,7 @@ INCLUDE Irvine32.inc
 ; *********************
 
 MAX_FIB TEXTEQU <46>
-
+COL_DIST = 14
 
 ; *********************
 ; .data: Variables    *
@@ -57,7 +57,6 @@ MAX_FIB TEXTEQU <46>
 	fib_prompt		BYTE	"How many Fibonacci terms do you want?",0
 	okay_msg		BYTE	"Thanks. Printing the sequence next...",0
 	err_range		BYTE	"Out of range. Enter a number in [1 ..",0
-	spaces			BYTE	5 DUP(" "),0
 
 	goodbye1		BYTE	"It's pronounced fee-boh-NOT-shee!",0
 	goodbye2		BYTE	"Goodbye, ",0
@@ -66,17 +65,55 @@ MAX_FIB TEXTEQU <46>
 	user_name		BYTE	30 DUP(0)	; input buffer
 
 ; Fibonnaci variables
-	fib_1			DWORD 1
-	fib_2			DWORD 1
-	current_term	DWORD ?
-	current_fib		DWORD ?
-	nth_fib			DWORD ?
+	fib_1			DWORD	1
+	fib_2			DWORD	1
+	current_term	DWORD	?
+	current_fib		DWORD	?
+	nth_fib			DWORD	?
 
-; Other variables
-	line_count		DWORD 0;
-
+; Output formatting
+	line_count		DWORD	0;
+	col				BYTE	0;
+	row				BYTE	0;
 
 .code
+
+; +--------------------+
+; |     MoveCursor     |
+; +--------------------+
+
+MoveCursor	PROC
+; Move cursor and then increment col for next pass
+	mov		al, col
+	add		al, COL_DIST
+	mov		col, al
+
+	mov 	dh, row
+	mov		dl, col
+	call	Gotoxy
+
+	ret
+MoveCursor ENDP
+
+
+; +--------------------+
+; |     MoveCursor     |
+; +--------------------+
+UpdateFib	PROC
+; current_fib = fib_1 + fib_2
+	mov 	eax, fib_1
+	add		eax, fib_2
+	mov		current_fib, eax
+
+; fib_2 = fib_1
+	mov		eax, fib_1
+	mov		fib_2, eax
+
+; fib_1 = current_fib
+	mov		eax, current_fib
+	mov		fib_1, eax
+	ret
+UpdateFib ENDP
 
 ; +--------------------+
 ; |       MAIN         |
@@ -214,46 +251,33 @@ FIRST_TWO:
 
 END_FIRST_TWO:
 	
-; current_fib = fib_1 + fib_2
-	mov 	eax, fib_1
-	add		eax, fib_2
-	mov		current_fib, eax
-
-; fib_2 = fib_1
-	mov		eax, fib_1
-	mov		fib_2, eax
-
-; fib_1 = current_fib
-	mov		eax, current_fib
-	mov		fib_1, eax
+	call	UpdateFib
 
 END_ELSE: 
 
 ; print current_fib
 	mov		eax, current_fib		; explicit in case I add code later
 	call	WriteDec
-
-; Print 5 spaces
-	mov 	edx, OFFSET spaces
-	call	WriteString
+	call	MoveCursor
 
 ; increment manual counters
 	inc		current_term
 	inc		line_count
 
-;  if line_count == 5, print a linebreak
+;  if line_count == 5, make a linebreak
 	mov 	eax, line_count
 	cmp 	eax, 5
 	jne 	LINE_BREAK_END
 
 LINE_BREAK:
-	call 	CrLf
+	inc		row
+	mov		col, 0
+	mov 	dh, row
+	mov		dl, 0
+	call	Gotoxy
 	mov		line_count, 0
 
 LINE_BREAK_END:
-
-
-
 
 	loop 	FIB_SEQUENCE
 
