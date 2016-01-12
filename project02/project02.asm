@@ -171,6 +171,12 @@ OUT_OF_RANGE:
 ; Print error message and jump back up
 	mov 	edx, OFFSET err_range
 	call	WriteString
+	mov		eax, MAX_FIB;
+	call	WriteDec
+	mov		edx, OFFSET range_end
+	call 	WriteString 
+	call 	CrLf
+	call	CrLf
 	jmp 	START_USER_DATA  	; loop through input and validation again
 
 
@@ -263,6 +269,9 @@ LINE_BREAK_END:
 	
 	mov 	edx, OFFSET goodbye2
 	call 	WriteString
+	mov		edx, OFFSET user_name
+	call	WriteString
+	call 	CrLf
 	call 	CrLf
 
 	exit	; exit to operating system  
