@@ -97,7 +97,7 @@ MoveCursor ENDP
 
 
 ; +--------------------+
-; |     MoveCursor     |
+; |     UpdateFib      |
 ; +--------------------+
 UpdateFib	PROC
 ; current_fib = fib_1 + fib_2
