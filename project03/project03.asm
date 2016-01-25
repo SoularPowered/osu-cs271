@@ -196,8 +196,6 @@ PrintIntroduction ENDP
 
 
 
-
-
 ; +------------------------------------------------------------+
 PrintInstructions	PROC
 ; Pre:	None
@@ -260,7 +258,7 @@ SumIntegers	PROC
 ; Post: quantityEntered will hold the number of value sentered
 ; +------------------------------------------------------------+
 
-;	4. Repeatedly prompt the user to enter a number. 
+; Repeatedly prompt the user to enter a number. 
 READ_VALUE:
 
 ; Extra Credit: Labels each entry with the current valid entry attempt
