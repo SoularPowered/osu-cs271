@@ -10,10 +10,20 @@ INCLUDE Irvine32.inc
 
 .data
 
+
+
 ; (insert variable definitions here)
 
 .code
 main PROC
+
+mov eax,+4823424
+mov ebx,-423
+imul ebx
+
+
+
+
 
 ; (insert executable instructions here)
 
