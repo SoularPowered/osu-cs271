@@ -40,7 +40,8 @@ INCLUDE Irvine32.inc
 ; Constants           *
 ; *********************
 
-LOWER_LIMIT = -100	;  smallest integer value user can enter
+LOWER_LIMIT = -100		; smallest integer value user can enter
+UPPER_LIMIT = -1		; largest integer value user can enter
 
 
 ; *********************
@@ -61,16 +62,29 @@ LOWER_LIMIT = -100	;  smallest integer value user can enter
 	instructions_2	BYTE	"Please enter numbers in [",0
 	rangeEnd		BYTE	", -1].",0
 
-	inputPrompt		BYTE	"Enter number: ",0
+	inputPrompt		BYTE	"Enter number and press enter: ",0
+	noneInput		BYTE	"No values entered, you're making this too easy...",0
+	tooLowMsg		BYTE	"That value is too low.",0
+	
+	qtyEnteredMsg_1	BYTE	"You entered ",0
+	qtyEnteredMsg_2	BYTE	" valid numbers.",0
+	sumMsg			BYTE	"The sum of your valid numbers is ",0
+	averageMsg		BYTE	"The rounded average is ",0
 
-
-	goodbye1		BYTE	"Next time I'll try not to be so negative!",0
-	goodbye2		BYTE	"Goodbye, ",0
+	goodbye1		BYTE	"Next time I'll try not to be so 'negative'!",0
+	goodbye2		BYTE	"Come again, ",0
 	
 
 ; Strings - Input
-	userName		BYTE	30 DUP(0)	; input buffer
-	numberIn
+	userName		BYTE	30 DUP(0)	; input buffer to store user's name
+
+
+; Numbers used in processing the data
+	numberInput		SDWORD	0			; the user's input number
+	quantityEntered	DWORD	0			; How many (valid) negative numbers were entered
+	sum				SDWORD	0			; The summation of all valid numbers entered
+	average			SDWORD	0			; The average of all the values entered (sum / quantityEntered)
+
 
 .code
 
@@ -86,7 +100,7 @@ PrintIntroduction	PROC
 	call 	CrLf
 
 	mov		edx, OFFSET programmer
-	call 	WriteString 
+	call 	WriteString
 	call 	CrLf
 
 ; Extra Credit 1 Implemented message
@@ -185,6 +199,115 @@ PrintFarewell ENDP
 ; +------------------------------------------------------------+
 
 
+
+; +------------------------------------------------------------+
+SumIntegers	PROC
+; Pre:	None
+; Post: Repeatedly prompt the user to enter a numbers
+; Post: sum will hold the sum of all numbers in the valid range
+; Post: quantityEntered will hold the number of value sentered
+; +------------------------------------------------------------+
+;	4. Repeatedly prompt the user to enter a number. 
+READ_VALUE:
+	mov		edx, OFFSET inputPrompt
+	call	WriteString
+	call	ReadInt
+	mov		numberInput, eax
+
+; if numberInput is lower than LOWER_LIMIT, print error message and prompt again
+	cmp		numberInput, LOWER_LIMIT
+	jge		NOT_TOO_LOW
+TOO_LOW:
+	mov		edx, OFFSET tooLowMsg
+	call	WriteString
+	call	CrLf
+	jmp		READ_VALUE
+; else if input is >= 0, jump to end of function
+NOT_TOO_LOW:
+	cmp		numberInput, 0
+	jge		END_SUM
+
+; else value is in range (inclusive) of [LOWER_LIMIT .. UPPER_LIMIT] so increment counter and add to sum, repeat
+	mov		eax, sum
+	add		eax, numberInput
+	mov		sum, eax
+	inc		quantityEntered
+	jmp		READ_VALUE
+
+END_SUM:	
+	ret
+; +------------------------------------------------------------+
+SumIntegers ENDP
+; +------------------------------------------------------------+
+
+
+
+; +------------------------------------------------------------+
+CalculateAverage PROC
+; Pre:	EAX holds the sum of the values being averaged
+; Pre:	EBX holds the quantity of values to average
+; Pre:	EBX (quantity) > 0
+; Post: EAX will hold the average, rounded to nearest integer, of values entered
+; +------------------------------------------------------------+
+	push	ebx
+
+; Average (EAX) = Sum (EDX:EAX) / Quantity (EBX)
+	cdq					; extend EAX into EDX
+	idiv	ebx
+
+; if [ (2 * remainder) >= quantity ], then we'd get a decimal of .5 or higher, so need to round
+	mov		ebx, edx
+	add		edx, ebx	; this doubles the remainder
+	pop		ebx			; get the original count back	
+	cmp		edx, ebx
+	jb		NO_ROUNDING	; if remainder * 2 < quantityEntered, don't round
+	dec		eax			; else deccrement to closest integer. -20.5 through -20.9, for exmaple, should round to -21. -20.4 should stay as -20
+NO_ROUNDING:
+	
+	ret
+; +------------------------------------------------------------+
+CalculateAverage ENDP
+; +------------------------------------------------------------+
+
+
+
+; +------------------------------------------------------------+
+PrintSummary PROC
+; Pre:	EAX will hold the average
+; Pre:	EBX will hold the sum
+; Pre:	EDX will hold the quantity of values entered
+; Post: Sum, average, and quantity entered will be displayed on screen
+; +------------------------------------------------------------+
+	
+; Print the number of valid numbers entered
+	mov 	edx, OFFSET qtyEnteredMsg_1
+	call 	WriteString
+	mov		eax, quantityEntered
+	call	WriteDec
+	mov 	edx, OFFSET qtyEnteredMsg_2
+	call 	WriteString
+	call 	CrLf
+
+; Print the sum of the numbers
+	mov		edx, OFFSET	sumMsg
+	call	WriteString
+	mov		eax, sum
+	call	WriteInt
+	call 	CrLf
+
+; Print the average of the numbers
+	mov		edx, OFFSET averageMsg
+	call	WriteString
+	mov		eax, average
+	call	WriteInt
+	call 	CrLf
+
+	ret
+; +------------------------------------------------------------+
+PrintSummary ENDP
+; +------------------------------------------------------------+
+
+
 main PROC
 
 ;	1. Display the program title and programmer’s name.
@@ -193,17 +316,43 @@ main PROC
 
 ;	3. Display instructions for the user.
 	call	PrintInstructions
+
 ;	4. Repeatedly prompt the user to enter a number. 
 ;      Validate the user input to be in [-100, -1] (inclusive).
 ;	   Count and accumulate the valid user numbers until a non-negative number is entered. (The non-negative number is discarded.)
+
+	call	SumIntegers
+
+; if quantityEntered == 0, jump down to FAREWELL
+	cmp		quantityEntered,0
+	jne		PROCESS_DATA
+
+; Nothing entered - print message then jump to FAREWELL
+NONE_ENTERED:
+	mov		edx, OFFSET noneInput
+	call	WriteString
+	call	CrLf
+	jmp		FAREWELL
+
 ;	5. Calculate the (rounded integer) average of the negative numbers.
+PROCESS_DATA:
+	; Move the arguments for CalculateAverage into registers, store the result in average
+	mov		eax, sum
+	mov		ebx, quantityEntered
+	call	CalculateAverage
+	mov		average, eax
+
 ;	6. Display:
 ;		i. the number of negative numbers entered (Note: if no negative numbers were entered, display a special message and skip to iv.)
 ;		ii. the sum of negative numbers entered
 ;		iii. the average, rounded to the nearest integer (e.g. -20.5 rounds to -20)
-
+	mov		ebx, sum
+	mov		eax, average
+	mov		edx, quantityEntered
+	call	PrintSummary
 
 ;		iv. a parting message (with the user’s name)
+FAREWELL:
 	call	PrintFarewell
 
 
