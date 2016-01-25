@@ -256,6 +256,7 @@ CalculateAverage PROC
 	idiv	ebx
 
 ; if [ (2 * remainder) >= quantity ], then we'd get a decimal of .5 or higher, so need to round
+	neg		edx			; the remainder is negative -- we want to work with a positive value for this comparison
 	mov		ebx, edx
 	add		edx, ebx	; this doubles the remainder
 	pop		ebx			; get the original count back	
