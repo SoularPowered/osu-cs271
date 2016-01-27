@@ -1,4 +1,4 @@
-TITLE Programming Assignment 3    (project03.asm)
+TITLE Programming Assignment 3    (project03-hillyer.asm)
 
 ; ==========================================================================================================
 ; Author: Shawn S Hillyer								Email: hillyers@oregonstate.edu
@@ -31,7 +31,7 @@ TITLE Programming Assignment 3    (project03.asm)
 ; This is an integer program. Even though it would make more sense to use floating-point computations, you are required to do this one with integers.
 ; [Extra-credit options]
 ; [Implemented]			1. Number the lines during user input.
-; [Not Implemented]		2. Calculate and display the average as a floating-point number, rounded to the nearest .001.
+; [Implemented]			2. Calculate and display the average as a floating-point number, rounded to the nearest .001.
 ; [Not Implemented]		3. Do something astoundingly creative.
 
 INCLUDE Irvine32.inc
@@ -53,7 +53,7 @@ UPPER_LIMIT = -1		; largest integer value user can enter
 	intro			BYTE	"Welcome to the Integer Accumulator",0
 	programmer		BYTE	"by Shawn S Hillyer",0
 	ecIntro_1		BYTE	"**EC: Numbers the lines during user input.",0
-;	ecIntro_2		BYTE	"**EC: Calculate and display the average as a floating-point number, rounded to the nearest .001",0
+	ecIntro_2		BYTE	"**EC: Calculate and display the average as a floating-point number, rounded to the nearest .001",0
 ;	ecIntro_3		BYTE	"**EC: Does something astoundingly creative.",0
 	namePrompt		BYTE	"What is your name?",0
 	greeting		BYTE	"Hello, ",0
@@ -71,6 +71,7 @@ UPPER_LIMIT = -1		; largest integer value user can enter
 	qtyEnteredMsg_2	BYTE	" valid numbers.",0
 	sumMsg			BYTE	"The sum of your valid numbers is ",0
 	averageMsg		BYTE	"The rounded average is ",0
+	decimalStr		BYTE	".",0
 
 	goodbye1		BYTE	"Next time I'll try not to be so 'negative'!",0
 	goodbye2		BYTE	"Come again, ",0
@@ -85,6 +86,8 @@ UPPER_LIMIT = -1		; largest integer value user can enter
 	quantityEntered	DWORD	0			; How many (valid) negative numbers were entered
 	sum				SDWORD	0			; The summation of all valid numbers entered
 	average			SDWORD	0			; The average of all the values entered (sum / quantityEntered)
+	avgDecimals		DWORD	4 DUP(0)	; the three decimal places for the average + 4th to calculate rounding
+	avgDecimalsSize = ($ - avgDecimals)	/ 4	
 	currentEntry	DWORD	1			; The current entry user is attempting to input
 
 .code
@@ -120,11 +123,11 @@ NONE_ENTERED:
 
 ; Calculate the (rounded integer) average of the negative numbers.
 PROCESS_DATA:
-	; Move the arguments for CalculateAverage into registers, store the result in average after called
+	; Move the arguments for CalculateAverage into registers
 	mov		eax, sum
 	mov		ebx, quantityEntered
 	call	CalculateAverage
-	mov		average, eax
+
 
 ; Display results: i. the number of negative numbers entered, ii. the sum of negative numbers entered, 
 ; iii. the average, rounded to the nearest integer (e.g. -20.5 rounds to -20)
@@ -162,9 +165,9 @@ PrintIntroduction	PROC
 	call	CrLf
 	
 ; Extra Credit 2 Implemented message
-;	mov		edx, OFFSET ecIntro_2
-;	call	WriteString
-;	call	CrLf
+	mov		edx, OFFSET ecIntro_2
+	call	WriteString
+	call	CrLf
 
 ; Extra Credit 3 Implemented message
 ;	mov		edx, OFFSET ecIntro_3
@@ -308,24 +311,49 @@ CalculateAverage PROC
 ; Pre:	EAX holds the sum of the values being averaged
 ; Pre:	EBX holds the quantity of values to average
 ; Pre:	EBX (quantity) > 0
-; Post: EAX will hold the average, rounded to nearest integer, of values entered
+; Post: average holds the integer average
+; Post: avgDecimals array holds the next 4 decimal points of the calculation
 ; +------------------------------------------------------------+
 	push	ebx
 
 ; Average (EAX) = Sum (EDX:EAX) / Quantity (EBX)
 	cdq					; extend EAX into EDX
 	idiv	ebx
+	mov		average, eax
 
-; if [ (2 * remainder) >= quantity ], then we'd get a decimal of .5 or higher, so need to round
-	neg		edx			; the remainder is negative -- we want to work with a positive value for this comparison
-	mov		ebx, edx
-	add		edx, ebx	; this doubles the remainder
-	pop		ebx			; get the original count back	
-	cmp		edx, ebx
-	jb		NO_ROUNDING	; if remainder * 2 < quantityEntered, don't round
-	dec		eax			; else deccrement to closest integer. -20.5 through -20.9, for exmaple, should round to -21. -20.4 should stay as -20
-NO_ROUNDING:
-	
+; Setup for decimal calculation loop
+	mov		esi, 0
+	mov		ecx, avgDecimalsSize
+	neg		edx	; edx is negative we want to work with positive for rest of algorithm
+
+CALC_DECIMALS:
+
+; Multiply the remainder by 10 then divide that by the quantityEntered
+	mov		eax, edx
+	mov		ebx, 10
+	mul		ebx		; eax is already extended
+
+; EDX:EAX contains the Remainder * 10, now divide by original divisor in stack
+	pop		ebx
+	push	ebx		; re-save qantityEntered value
+	div		ebx		; (remainder * 10) / quantityEntered
+	mov		avgDecimals[esi], eax
+	add		esi, 4
+	loop	CALC_DECIMALS
+
+	pop		ebx		; clear the last push off stack
+
+; Determine if we need to round up by comparing the 4th decimal to 5
+	cmp		avgDecimals[esi], 5
+	jb		NO_ROUND
+
+; If the 4th decimal is greater than or equal to 5, round up the 3rd
+	mov		esi, 0
+	add		esi, 2 * 4		; third element * 4 bytes each
+	inc		avgDecimals[esi]
+
+NO_ROUND:
+
 	ret
 ; +------------------------------------------------------------+
 CalculateAverage ENDP
@@ -363,7 +391,17 @@ PrintSummary PROC
 	call	WriteString
 	mov		eax, average
 	call	WriteInt
-	call 	CrLf
+	mov		edx, OFFSET decimalStr
+	call	WriteString
+
+	mov		ecx, 3	; we will print the first three decimals
+	mov		esi, OFFSET avgDecimals
+DECIMAL_PRINT:
+	mov		eax, [esi]
+	call	WriteDec
+	add		esi, 4
+
+	loop	DECIMAL_PRINT
 
 	ret
 ; +------------------------------------------------------------+
@@ -371,3 +409,39 @@ PrintSummary ENDP
 ; +------------------------------------------------------------+
 
 END main
+
+
+
+
+
+; The below should not compile
+; this is the non-extra-credit version of the average calculation
+
+
+; +------------------------------------------------------------+
+CalculateAverage PROC
+; Pre:	EAX holds the sum of the values being averaged
+; Pre:	EBX holds the quantity of values to average
+; Pre:	EBX (quantity) > 0
+; Post: EAX will hold the average, rounded to nearest integer, of values entered
+; +------------------------------------------------------------+
+	push	ebx
+
+; Average (EAX) = Sum (EDX:EAX) / Quantity (EBX)
+	cdq					; extend EAX into EDX
+	idiv	ebx
+
+; if [ (2 * remainder) >= quantity ], then we'd get a decimal of .5 or higher, so need to round
+	neg		edx			; the remainder is negative -- we want to work with a positive value for this comparison
+	mov		ebx, edx
+	add		edx, ebx	; this doubles the remainder
+	pop		ebx			; get the original count back	
+	cmp		edx, ebx
+	jb		NO_ROUNDING	; if (remainder * 2 < quantityEntered), don't round
+	dec		eax			; else deccrement to closest integer. -20.5 through -20.9, for exmaple, should round to -21. -20.4 should stay as -20
+NO_ROUNDING:
+	
+	ret
+; +------------------------------------------------------------+
+CalculateAverage ENDP
+; +------------------------------------------------------------+
