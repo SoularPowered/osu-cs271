@@ -285,10 +285,11 @@ TOO_LOW:
 	call	WriteString
 	call	CrLf
 	jmp		READ_VALUE
+
 ; else if input is >= 0, jump to end of function
 NOT_TOO_LOW:
 	cmp		numberInput, 0
-	jge		END_SUM
+	jns		END_SUM			; Check the signed flag and see if the value is negative or not
 
 ; else value is in range (inclusive) of [LOWER_LIMIT .. UPPER_LIMIT] so increment counter and add to sum, repeat
 	mov		eax, sum
