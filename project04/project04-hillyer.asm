@@ -55,7 +55,7 @@ INCLUDE Irvine32.inc
 ; *********************
 
 UPPER_LIMIT = 400		; largest integer value user can enter
-
+TAB = 9
 
 ; *********************
 ; Variables           *
@@ -82,22 +82,25 @@ UPPER_LIMIT = 400		; largest integer value user can enter
 
 
 ; Numbers used in processing the data
-	numberInput		SDWORD	0			; the user's input number
+	numberInput		DWORD	0			; the user's input number
+	currentInteger	DWORD	1			; the current integer we are checking / printing
+	valToCheck		DWORD	0			; a value we are checking if composite / prime
+	primalityCtr	DWORD	0			; used in isComposite process
 
-; Boolean to track if input is valid or not
+; Booleans. 0 == false, 1 == true
 	isValid			BYTE	0			
-
+	isComp			BYTE	0
 .code
 
 
 ; +------------------------------------------------------------+
 main PROC
-; Description:	
-;
-; Receives:		
-; Returns:		
-; Pre:			None
-; Reg Changed:	
+; Description:	Control process. Calls introduction, instructions,
+;   getUserData, showComposites, and Farewell per assignment desciption
+; Receives:		None
+; Returns:		None
+; Pre:			UPPER_LIMIT should be at most 32bit positive int
+; Reg Changed:	Potentially all - main entrypoint
 ; +------------------------------------------------------------+
 
 ; Display the program title and programmer’s name & Get the user’s name, and greet the user.
@@ -109,12 +112,14 @@ main PROC
 ; Prompt the user to enter a number in range [1 .. 400], subroutine validates input while not valid
 	call	getUserData
 
+; Print the composite numbers from [1 .. inputNumber]
+	call showComposites
 
-; FareWell message (with the user’s name)
+; Print FareWell message
 	call	farewell
 
-
-	exit	; exit to operating system
+; exit to operating system
+	exit	
 main ENDP
 
 ; +------------------------------------------------------------+
@@ -169,6 +174,7 @@ instructions	PROC
 ; Pre:			None
 ; Reg Changed:	
 ; +------------------------------------------------------------+
+
 ; Print description of what program will do
 	mov		edx, OFFSET instructions_1
 	call 	WriteString 
@@ -200,6 +206,7 @@ farewell	PROC
 ; Pre:			None
 ; Reg Changed:	
 ; +------------------------------------------------------------+
+
 ; Add some space and say goodbye
 	call 	CrLf
 	call 	CrLf
@@ -224,32 +231,41 @@ farewell ENDP
 
 ; +------------------------------------------------------------+
 getUserData	PROC
-; Description:	
-;
+; Description:	Prompts user for int in range [1 .. UPPER_LIMIT]
+;   until a valid value is input
 ; Receives:		
-; Returns:		
+; Returns:		global numberInput = int in range [1 .. UPPER_LIMIT]
 ; Pre:			None
-; Reg Changed:	
+; Reg Changed:	eax, edx
 ; +------------------------------------------------------------+
-	
 
+; Unconditionally jump over error message on first pass
+	jmp		PROMPT_USER
+
+; Print error message if input out of range
+REPROMPT_USER:
+	mov		edx, OFFSET outOfRangMsg
+	call	WriteString
+	call	CrLf
+	
+PROMPT_USER:
 	mov		edx, OFFSET valuePrompt_1
 	call	WriteString
 	mov		eax, UPPER_LIMIT
 	call	WriteDec
 	mov		edx, OFFSET valuePrompt_2
 	call	WriteString
-	call	CrLf
+
 
 ; Read an integer and then validate that it is in range using subroutine
-	call	ReadInt
+	call	ReadDec
 	call	validate	; this will set isValid to 0 (false) or non-zero (true)
 	
-;	if global isValid == 0 (false), jump to top of loop
+; if global isValid == 0 (false), jump to top of loop
 	cmp		isValid, 0
-	
+	je		REPROMPT_USER
 
-	mov		eax, numberInput
+	mov		numberInput, eax
 
 	ret
 ; +------------------------------------------------------------+
@@ -261,13 +277,29 @@ getUserData ENDP
 validate	PROC
 ; Description:	
 ;
-; Receives:		
-; Returns:		
+; Receives:		eax register
+; Returns:		global isValid == 0 if in range [1 .. UPPER_LIMIT]
+;               == 1 if not in range [1 .. UPPER_LIMIT]
 ; Pre:			None
 ; Reg Changed:	
 ; +------------------------------------------------------------+
 
+; If user input < +1, set isValid to false
+	cmp		eax, 1
+	jb		NOT_VALID
 
+; If user input > +UPPER_LIMIT, set isValid to false
+	cmp		eax, UPPER_LIMIT
+	ja		NOT_VALID
+
+; Else set isValid to true
+	mov		isValid, 1
+	jmp		VALIDATE_RETURN
+
+NOT_VALID:
+	mov		isValid, 0
+
+VALIDATE_RETURN:
 	ret
 ; +------------------------------------------------------------+
 validate ENDP
@@ -281,8 +313,27 @@ showComposites PROC
 ; Receives:		
 ; Returns:		
 ; Pre:			None
-; Reg Changed:	
+; Reg Changed:	eax, ecx, al
 ; +------------------------------------------------------------+
+	
+; Set loop counter to numberInput and print out all composites
+	mov		ecx, numberInput
+	mov		currentInteger, 1	; explicitly setting internal counter
+
+PRINT_COMPOSITES_LOOP:
+	mov		eax, currentInteger
+	call	isComposite
+	cmp		isComp, 0
+	je		NO_PRINT
+
+	mov		eax, currentInteger
+	call	WriteDec
+	mov		al, TAB
+	call	WriteChar
+
+NO_PRINT:
+	inc		currentInteger	; move to the next number
+	loop	PRINT_COMPOSITES_LOOP
 
 	ret
 ; +------------------------------------------------------------+
@@ -294,12 +345,83 @@ showComposites ENDP
 isComposite PROC
 ; Description:	
 ;
-; Receives:		
+; Receives:		eax register of value to check for composite-ness
 ; Returns:		
 ; Pre:			None
-; Reg Changed:	
+; Reg Changed:	eax, ebx, edx
 ; +------------------------------------------------------------+
+	push	ecx				; save outer loop counter
+	mov		valToCheck, eax	; hold the value from eax so we can reuse it in calculations
 
+; if eax is 1, 2 or 3, then it is not composite
+	cmp		valToCheck, 3
+	jbe		ISCOMP_FALSE
+
+; else if n is even or divisible by 3, it is composite
+	; check if even	
+	mov		eax, valToCheck
+	mov		edx, 0
+	mov		ebx, 2  
+	div		ebx
+	cmp		edx, 0
+	je		ISCOMP_TRUE
+
+	; check if divisible by 3
+	mov		eax, valToCheck
+	mov		edx, 0
+	mov		ebx, 3  
+	div		ebx
+	cmp		edx, 0
+	je		ISCOMP_TRUE
+
+; else check if it is divisible by any integer from i = 3 to square root of valToCheck
+; (Using this pseudocode from https://en.wikipedia.org/wiki/Primality_test) : 
+; Let primalityCtr = 5
+	mov		primalityCtr, 5
+
+; while (primalityCtr * primalityCtr) <= valToCheck
+PRIMAL_LOOP:
+	mov		eax, primalityCtr
+	mul		primalityCtr
+	cmp		eax, valToCheck
+	ja		ISCOMP_FALSE
+	
+; if valToCheck mod primalityCtr == 0, return true 
+	mov		eax, valToCheck
+	mov		edx, 0
+	mov		ebx, primalityCtr
+	div		ebx
+	cmp		edx, 0
+	je		ISCOMP_TRUE
+
+; or if valToCheck mod (primalityCtr + 2) == 0, return true
+	mov		eax, valToCheck
+	mov		edx, 0
+	mov		ebx, primalityCtr
+	add		ebx, 2
+	div		ebx
+	cmp		edx, 0
+	je		ISCOMP_TRUE
+
+	; primalityCtr = primalityCtr + 6
+	add		primalityCtr, 6
+	loop	PRIMAL_LOOP  ; end 'while', jump back to while test
+
+; if not, return false
+	jmp		ISCOMP_FALSE
+
+; If is a composite, set to return value = true
+ISCOMP_TRUE:
+	mov		isComp, 1
+	jmp		ISCOMPOSITE_RETURN
+
+; If is not composite, set return value = false
+ISCOMP_FALSE:
+	mov		isComp, 0
+	jmp		ISCOMPOSITE_RETURN
+
+ISCOMPOSITE_RETURN:
+	pop		ecx		; restore outer loop counter
 	ret
 ; +------------------------------------------------------------+
 isComposite ENDP
