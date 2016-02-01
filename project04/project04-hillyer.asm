@@ -15,27 +15,28 @@ TITLE Programming Assignment 4    (project04-hillyer.asm)
 ;
 ; ==========================================================================================================
 ; [Requirements]
-;	1. The programmer’s name must appear in the output.
-;	2. The counting loop (1 to n) must be implemented using the MASM loop instruction.
+;	1. The programmer’s name must appear in the output. [Done]
+;	2. The counting loop (1 to n) must be implemented using the MASM loop instruction. [Done]
 ;   3. The main procedure must consist (mostly) of procedure calls. It should be a readable “list” of what 
-;      the program will do.
+;      the program will do. [Done]
 ;   4. Each procedure will implement a section of the program logic, i.e., each procedure will specify how 
 ;      the logic of its section is implemented. The program must be modularized into at least the following
 ;      procedures and sub-procedures :
-;		* introduction		x
-;		* getUserData		x
-;		* validate			x
-;		* showComposites	x
-;		* isComposite		x
-;		* farewell			x
-;   5. The upper limit should be defined and used as a constant.
+;		* introduction		[Done]
+;		* getUserData		[Done]
+;		* validate			[Done]
+;		* showComposites	[Done]
+;		* isComposite		[Done]
+;		* farewell			[Done]
+;   5. The upper limit should be defined and used as a constant. [Done]
 ;   6. Data validation is required. If the user enters a number outside the range [1 .. 400] an error 
-;      message should be displayed and the user should be prompted to re-enter the number of composites.
-;   7. The usual requirements regarding documentation, readability, user-friendliness, etc., apply.
+;      message should be displayed and the user should be prompted to re-enter the number of composites. [Done]
+;   7. The usual requirements regarding documentation, readability, user-friendliness, etc., apply. [Done]
 ; ==========================================================================================================
 ; [Important Notes]
 ;   1. For this program, you may use global variables instead of passing parameters. This is a one-time 
 ;      relaxation of the standards so that you can get accustomed to using procedures.
+;    *** I OPTED TO EXERCISE THIS FREEDOM ***
 ;   2. A number k is composite if it can be factored into a product of smaller integers. Every integer 
 ;      greater than one is either prime or composite. Note that this implies that
 ;        a. 1 is not composite.
@@ -44,9 +45,14 @@ TITLE Programming Assignment 4    (project04-hillyer.asm)
 ;      in your groups!)
 ;
 ; [Extra-credit options]
-; [Not Implemented]		1. Align the output columns.
-; [Not Implemented]		2. Display more composites, but show them one page at a time. The user can “Press any key to continue …” to view the next page. Since length of the numbers will increase, it’s OK to display fewer numbers per line.
-; [Not Implemented]		3. One way to make the program more efficient is to check against only prime divisors, which requires saving all of the primes found so far (numbers that fail the composite test). It’s easy in a high-level language, but you will have to look ahead in the textbook to figure out how to do it in assembly language.
+; [Implemented]			1. Align the output columns.
+; [Not Implemented]		2. Display more composites, but show them one page at a time. The user can “Press 
+;						   any key to continue …” to view the next page. Since length of the numbers will 
+;                          increase, it’s OK to display fewer numbers per line.
+; [Not Implemented]		3. One way to make the program more efficient is to check against only prime 
+;                          divisors, which requires saving all of the primes found so far (numbers that fail
+;                          the composite test). It’s easy in a high-level language, but you will have to 
+;                          look ahead in the textbook to figure out how to do it in assembly language.
 
 INCLUDE Irvine32.inc
 
@@ -55,7 +61,8 @@ INCLUDE Irvine32.inc
 ; *********************
 
 UPPER_LIMIT = 400		; largest integer value user can enter
-TAB = 9
+TAB = 9					; I used tab to align the output very easily for EC1 (left-justified)
+COLUMN_COUNT = 10		; number of values to display per row
 
 ; *********************
 ; Variables           *
@@ -65,7 +72,7 @@ TAB = 9
 ; Strings - Output
 	intro			BYTE	"Welcome to the Composite Numbers",0
 	programmer		BYTE	"Programmed by Shawn S Hillyer",0
-;	ecIntro_1		BYTE	"**EC: Aligns the output columns.",0
+	ecIntro_1		BYTE	"**EC: Aligns the output columns.",0
 ;	ecIntro_2		BYTE	"**EC: Displays more composites, but show them one page at a time.",0
 ;	ecIntro_3		BYTE	"**EC: Checks against only prime divisors.",0
 	
@@ -78,18 +85,20 @@ TAB = 9
 	outOfRangMsg	BYTE	"Out of range.",0
 		
 	goodbye1		BYTE	"Transforming back in to Optimus Prime... goodbye! Autobots, assemble(y)!",0
-	goodbye2		BYTE	"Brought to you by ",0
 
 
-; Numbers used in processing the data
+; Numbers used in processing / formatting the data
 	numberInput		DWORD	0			; the user's input number
 	currentInteger	DWORD	1			; the current integer we are checking / printing
 	valToCheck		DWORD	0			; a value we are checking if composite / prime
 	primalityCtr	DWORD	0			; used in isComposite process
+	compositeCount	DWORD	0			; Used to format numbers to 10 per row
 
 ; Booleans. 0 == false, 1 == true
 	isValid			BYTE	0			
 	isComp			BYTE	0
+
+
 .code
 
 
@@ -122,15 +131,14 @@ main PROC
 	exit	
 main ENDP
 
+
 ; +------------------------------------------------------------+
-introduction	PROC
-; Description:	Prints introduction to screen and gets user's name to
-;				greet them with.
-;
-; Receives:		
-; Returns:		
+introduction	PROC	USES	edx
+; Description:	Prints introduction to screen
+; Receives:		Global variable offsets for strings
+; Returns:		None
 ; Pre:			None
-; Reg Changed:	
+; Reg Changed:	None
 ; +------------------------------------------------------------+
 
 ; Print Program Title and Programmer's Name
@@ -143,9 +151,9 @@ introduction	PROC
 	call 	CrLf
 
 ; Extra Credit 1 Implemented message
-;	mov		edx, OFFSET ecIntro_1
-;	call	WriteString
-;	call	CrLf
+	mov		edx, OFFSET ecIntro_1
+	call	WriteString
+	call	CrLf
 	
 ; Extra Credit 2 Implemented message
 ;	mov		edx, OFFSET ecIntro_2
@@ -166,13 +174,12 @@ introduction ENDP
 
 
 ; +------------------------------------------------------------+
-instructions	PROC
-; Description:	
-;
-; Receives:		
-; Returns:		
+instructions	PROC	USES	edx eax
+; Description:	Print instructions for user to screen
+; Receives:		Global variable offsets for strings
+; Returns:		None
 ; Pre:			None
-; Reg Changed:	
+; Reg Changed:	None
 ; +------------------------------------------------------------+
 
 ; Print description of what program will do
@@ -180,7 +187,7 @@ instructions	PROC
 	call 	WriteString 
 	call 	CrLf
 
-; Print instructions
+; Print instructions with the limit constant UPPER_LIMIT
 	mov		edx, OFFSET instructions_2
 	call 	WriteString 
 	mov		eax, UPPER_LIMIT;
@@ -198,13 +205,12 @@ instructions ENDP
 
 
 ; +------------------------------------------------------------+
-farewell	PROC
-; Description:	
-;
-; Receives:		
-; Returns:		
+farewell		PROC	USES	edx
+; Description:	Prints a farewell message to user
+; Receives:		Global variable offsets for strings
+; Returns:		None
 ; Pre:			None
-; Reg Changed:	
+; Reg Changed:	None
 ; +------------------------------------------------------------+
 
 ; Add some space and say goodbye
@@ -214,9 +220,6 @@ farewell	PROC
 	mov 	edx, OFFSET goodbye1
 	call 	WriteString
 	call 	CrLf
-	
-	mov 	edx, OFFSET goodbye2
-	call 	WriteString
 	mov		edx, OFFSET programmer
 	call	WriteString
 	call 	CrLf
@@ -230,13 +233,13 @@ farewell ENDP
 
 
 ; +------------------------------------------------------------+
-getUserData	PROC
+getUserData	PROC	USES	eax edx
 ; Description:	Prompts user for int in range [1 .. UPPER_LIMIT]
 ;   until a valid value is input
-; Receives:		
+; Receives:		Global variable offsets for strings
 ; Returns:		global numberInput = int in range [1 .. UPPER_LIMIT]
 ; Pre:			None
-; Reg Changed:	eax, edx
+; Reg Changed:	None
 ; +------------------------------------------------------------+
 
 ; Unconditionally jump over error message on first pass
@@ -275,13 +278,13 @@ getUserData ENDP
 
 ; +------------------------------------------------------------+
 validate	PROC
-; Description:	
-;
+; Description:	Validates that the value in eax register is in
+;	the range of [1 .. UPPER_LIMIT]. Returns boolean response.
 ; Receives:		eax register
 ; Returns:		global isValid == 0 if in range [1 .. UPPER_LIMIT]
 ;               == 1 if not in range [1 .. UPPER_LIMIT]
 ; Pre:			None
-; Reg Changed:	
+; Reg Changed:	None
 ; +------------------------------------------------------------+
 
 ; If user input < +1, set isValid to false
@@ -307,19 +310,21 @@ validate ENDP
 
 
 ; +------------------------------------------------------------+
-showComposites PROC
-; Description:	
-;
-; Receives:		
-; Returns:		
+showComposites PROC	USES	eax ebx ecx edx
+; Description:	Prints the composite numbers from [1 .. numberInput]
+; Receives:		global numberInput in range [1 .. UPPER_LIMIT]
+;				global compositeCount
+; Returns:		None
 ; Pre:			None
-; Reg Changed:	eax, ecx, al
+; Reg Changed:	
 ; +------------------------------------------------------------+
 	
 ; Set loop counter to numberInput and print out all composites
 	mov		ecx, numberInput
-	mov		currentInteger, 1	; explicitly setting internal counter
+	mov		currentInteger, 1	; explicitly set internal counter
+	mov		compositeCount, 0	; explicitly set number of composites found for this call
 
+; Check every integer from 1 to numberInput using isComposite, jump past the print statement if not
 PRINT_COMPOSITES_LOOP:
 	mov		eax, currentInteger
 	call	isComposite
@@ -330,6 +335,16 @@ PRINT_COMPOSITES_LOOP:
 	call	WriteDec
 	mov		al, TAB
 	call	WriteChar
+	inc		compositeCount
+
+; Every 10th value, print a new line
+	mov		eax, compositeCount
+	mov		edx, 0
+	mov		ebx, COLUMN_COUNT
+	div		ebx
+	cmp		edx, 0
+	jne		NO_PRINT
+	call	CrLf
 
 NO_PRINT:
 	inc		currentInteger	; move to the next number
@@ -342,15 +357,14 @@ showComposites ENDP
 
 
 ; +------------------------------------------------------------+
-isComposite PROC
-; Description:	
-;
-; Receives:		eax register of value to check for composite-ness
-; Returns:		
+isComposite PROC USES	eax ebx ecx edx
+; Description:	Validates if int in the eax register is composite
+;	or not; returns 0 if not composite, 1 if is composite
+; Receives:		eax register of value to check for compositeness
+; Returns:		global 
 ; Pre:			None
-; Reg Changed:	eax, ebx, edx
+; Reg Changed:	
 ; +------------------------------------------------------------+
-	push	ecx				; save outer loop counter
 	mov		valToCheck, eax	; hold the value from eax so we can reuse it in calculations
 
 ; if eax is 1, 2 or 3, then it is not composite
@@ -375,18 +389,18 @@ isComposite PROC
 	je		ISCOMP_TRUE
 
 ; else check if it is divisible by any integer from i = 3 to square root of valToCheck
-; (Using this pseudocode from https://en.wikipedia.org/wiki/Primality_test) : 
+; (Using reasoning from https://en.wikipedia.org/wiki/Primality_test) : basically uses variety of rules to reduce time spent checking values 
 ; Let primalityCtr = 5
 	mov		primalityCtr, 5
 
-; while (primalityCtr * primalityCtr) <= valToCheck
+; while (primalityCtr * primalityCtr) <= valToCheck    - ensures we stop after we exceed square root of valToCheck
 PRIMAL_LOOP:
 	mov		eax, primalityCtr
 	mul		primalityCtr
 	cmp		eax, valToCheck
 	ja		ISCOMP_FALSE
 	
-; if valToCheck mod primalityCtr == 0, return true 
+; if valToCheck mod primalityCtr == 0, return true    - check divisiblity for 5 + 6k for k >= 1 .. sqrt(valToCheck)
 	mov		eax, valToCheck
 	mov		edx, 0
 	mov		ebx, primalityCtr
@@ -394,7 +408,7 @@ PRIMAL_LOOP:
 	cmp		edx, 0
 	je		ISCOMP_TRUE
 
-; or if valToCheck mod (primalityCtr + 2) == 0, return true
+; or if valToCheck mod (primalityCtr + 2) == 0, return true  - check divisiblity for 7 + 6k for k >= 1 .. sqrt(valToCheck)
 	mov		eax, valToCheck
 	mov		edx, 0
 	mov		ebx, primalityCtr
@@ -421,7 +435,6 @@ ISCOMP_FALSE:
 	jmp		ISCOMPOSITE_RETURN
 
 ISCOMPOSITE_RETURN:
-	pop		ecx		; restore outer loop counter
 	ret
 ; +------------------------------------------------------------+
 isComposite ENDP
@@ -430,19 +443,16 @@ isComposite ENDP
 END main
 
 
-
-
-
 ; The below should not compile
 
 
 ; +------------------------------------------------------------+
 someprocess PROC
 ; Description:	
-;
+;	
 ; Receives:		
 ; Returns:		
-; Pre:			None
+; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
 
