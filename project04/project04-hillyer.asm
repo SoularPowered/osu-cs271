@@ -311,9 +311,8 @@ validate ENDP
 
 ; +------------------------------------------------------------+
 showComposites PROC	USES	eax ebx ecx edx
-; Description:	Prints the composite numbers from [1 .. numberInput]
+; Description:	Prints all composite numbers from [1st .. numberInput-th composite]
 ; Receives:		global numberInput in range [1 .. UPPER_LIMIT]
-;				global compositeCount
 ; Returns:		None
 ; Pre:			None
 ; Reg Changed:	
@@ -321,33 +320,37 @@ showComposites PROC	USES	eax ebx ecx edx
 	
 ; Set loop counter to numberInput and print out all composites
 	mov		ecx, numberInput
-	mov		currentInteger, 1	; explicitly set internal counter
+	mov		currentInteger, 3	; explicitly set internal counter to one before the first composite
 	mov		compositeCount, 0	; explicitly set number of composites found for this call
 
-; Check every integer from 1 to numberInput using isComposite, jump past the print statement if not
+; Print composites until we have printed numberInput-th composite
 PRINT_COMPOSITES_LOOP:
+
+; Inner loop: while currentInteger is not composite, increment the currentInteger
+WHILE_NOT_COMPOSITE:
+	inc	currentInteger
 	mov		eax, currentInteger
 	call	isComposite
 	cmp		isComp, 0
-	je		NO_PRINT
+	je		WHILE_NOT_COMPOSITE
 
+; else if is composite, print the decimal, a tab, and increment compositeCount
 	mov		eax, currentInteger
 	call	WriteDec
 	mov		al, TAB
 	call	WriteChar
 	inc		compositeCount
 
-; Every 10th value, print a new line
+; Every COLUMN_COUNT-th value, print a new line
 	mov		eax, compositeCount
 	mov		edx, 0
 	mov		ebx, COLUMN_COUNT
 	div		ebx
 	cmp		edx, 0
-	jne		NO_PRINT
+	jne		NO_LINEBREAK
 	call	CrLf
 
-NO_PRINT:
-	inc		currentInteger	; move to the next number
+NO_LINEBREAK:
 	loop	PRINT_COMPOSITES_LOOP
 
 	ret
