@@ -111,7 +111,7 @@ ENDM
 ; *********************
 ; Constants           *
 ; *********************
-MAX_UNSIGNED_INT = 4294967295   ; maximum value that fits in 32 bit unsigned DWORD
+MAX_UNSIGNED_INT EQU 4294967295   ; maximum value that fits in 32 bit unsigned DWORD
 MAX_DIGITS = 10                 ; maximum digits that a user can enter and still (possibly) be 32 bit unsigned int
 DATA_ARRAY_SIZE = 10
 BUFFER_SIZE = DATA_ARRAY_SIZE + 1
@@ -214,35 +214,46 @@ main ENDP
 ReadVal PROC
 ; Description:	Gets string of digits from user, then convert to
 ;               numeric and validate input.
-; Receives:		
+; Receives:		@buffer (reference), @result (reference)
 ; Returns:		
 ; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
+	buffer		EQU PTR DWORD [ebp + 8]
+	result		EQU PTR DWORD [ebp + 12]
+
 	push	ebp
-	mov	ebp, esp
+	mov		ebp, esp
+
+
+; Invoke the getString macro to get the user's string of digits
+	getString	valuePrompt, rawStringIn
 
 RETRY:
-; Invoke the getString macro to get the user's string of digits
-	getString valuePrompt, rawStringIn
-
-
 ; Convert digit string to numeric while validating user's input	
 
+; move the value into eax and compare to max int possible
+	; DEBUG PURPOSES:
+;	mov		eax, 100
+
 ; if good, jump to valid block
-
+;	mov		ebx, MAX_UNSIGNED_INT
+;	cmp		eax, ebx
+;	jb		GOOD_INPUT
 ; if bad
-	displayString badInputMsg
-	call	CrLF
-	jmp	RETRY
-INPUT_VALID:
+;	getString	badInputMsg, rawStringIn
+;	call		CrLF
+;	jmp			RETRY
 
-; return value by reference?
-	; mov	referenceVal, eax
+GOOD_INPUT:
+
+; return value by reference
+;	mov		edi, result
+;	mov		[edi], eax
 
 ; Clean up stack and return
 	pop		ebp
-	ret
+	ret		8
 
 ; +------------------------------------------------------------+
 ReadVal ENDP
@@ -260,12 +271,6 @@ WriteVal PROC
 ; +------------------------------------------------------------+
 	push	ebp
 	mov	ebp, esp
-COMMENT !
-Psuedocode:
-
-
-
-!	
 
 
 ; Clean up stack and return
@@ -288,16 +293,17 @@ getUserData PROC
 ; Reg Changed:	
 ; +------------------------------------------------------------+
 	push	ebp
-	mov	ebp, esp
+	mov		ebp, esp
 
-COMMENT !
-Psuedocode:
-!	
-
+; 
+	mov		edi, OFFSET rawStringIn
+	push	singleData
+	push	edi ; TODO: Pass this parameter in to this function
+	call	ReadVal
 
 ; Clean up stack and return
 	pop		ebp
-	ret
+	ret		
 
 ; +------------------------------------------------------------+
 getUserData ENDP
