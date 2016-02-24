@@ -114,7 +114,8 @@ ENDM
 MAX_UNSIGNED_INT EQU 4294967295   ; maximum value that fits in 32 bit unsigned DWORD
 MAX_DIGITS = 10                 ; maximum digits that a user can enter and still (possibly) be 32 bit unsigned int
 DATA_ARRAY_SIZE = 10
-BUFFER_SIZE = DATA_ARRAY_SIZE + 1
+BUFFER_SIZE = DATA_ARRAY_SIZE + 30
+MAX_BUFFER_SIZE = DATA_ARRAY_SIZE + 1
 
 ; *********************
 ; Variables           *
@@ -128,30 +129,41 @@ BUFFER_SIZE = DATA_ARRAY_SIZE + 1
 ;	ecIntro_2		BYTE	"**EC: ",0
 ;	ecIntro_3		BYTE	"**EC: ",0
 ;	ecIntro_4		BYTE	"**EC: ",0
+	pIntro			DWORD	OFFSET intro
 	
-	instructions_1	BYTE	"Please provide 10 unsigned decimal integers.",0Dh,0Ah
+	instructions	BYTE	"Please provide 10 unsigned decimal integers.",0Dh,0Ah
 					BYTE	"Each number needs to be small enough to fit inside a 32 bit register.",0Dh,0Ah
 					BYTE	"After you have finished inputting the raw numbers I will display a list",0Dh,0Ah
 					BYTE	"of the integers, their sum, and their average value.",0
+	pInstructions	DWORD	OFFSET instructions
 
 	valuePrompt		BYTE	"Please enter an unsigned number:  ",0
+	pValuePrompt	DWORD	OFFSET valuePrompt
+
 	badInputMsg		BYTE	"ERROR: You did not enter an unsigned number or your number was too big.",0Dh,0Ah
 					BYTE	"Please try again:  ",0
+	pBadInputMsg	DWORD	OFFSET badInputMsg
 
 	numbersMsg		BYTE	"You entered the following numbers: ",0
+	pNumbersMsg		DWORD	OFFSET numbersMsg
 	sumMsg			BYTE	"The sum of these numbers is: ",0
+	pSumMsg			DWORD	OFFSET sumMsg
 	avgMsg			BYTE	"The average is: ",0
+	pAvgMsg			DWORD	OFFSET avgMsg
 
 	goodbye1		BYTE	"Getting down low with the in and the out was fun!",0
-
+	pGoodbye1		DWORD	OFFSET goodbye1
 
 ; Data Variables
-	userData	DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
+	userData		DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
 	userDataSize = ($ - userData)
-	singleData	DWORD	?
-	rawStringIn	BYTE	BUFFER_SIZE DUP(?)
-	dataSum		DWORD	0		; The sum of the userData array
-	dataAvg		DWORD	0		; Average of the data stored in userData array
+	pUserData		DWORD	OFFSET userData
+	
+	singleInt		DWORD	?
+	rawStringIn		BYTE	BUFFER_SIZE DUP(?)
+	pRawStringIn	DWORD	rawStringIn
+	dataSum			DWORD	0		; The sum of the userData array
+	dataAvg			DWORD	0		; Average of the data stored in userData array
 	
 
 
@@ -169,32 +181,43 @@ main PROC
 
 
 ; Display the program title and programmer's name & Get the user's name, and greet the user.
-	displayString 	OFFSET intro
+	displayString 	pIntro
 	call			CrLf
 	call			CrLF
 
 ; Display instructions for the user.
-	displayString 	OFFSET instructions_1
+	displayString 	pInstructions
 	call			CrLf
 	call			CrLF
 
 ; Prompt user for the 10 values and store them in an array
 	call	getUserData
 	call	CrLF
+
+; Calculate the sum and average of the array
+;	call	sumAvgArray
 	
-; Print the values entered, sum, and average
-	; push	OFFSET	avgMsg
-	; push	OFFSET sumMsg
-	; push	OFFSET numbersMsg
-	push	dataAvg
-	push	dataSum
-	mov		eax, userDataSize
-	push	eax
-	push	OFFSET	userData		
-	call	displaySummary
+; Print the values entered
+	displayString pNumbersMsg
+	call	CrLf
+;	call	printArray
+	call	CrLf
+
+; Print the sum
+	displayString pSumMsg
+;	push dataSum
+	call	WriteVal
+	call	CrLf
+
+; Print the average
+	displayString pAvgMsg
+;	push	dataAvg
+	call	WriteVal
+	call	CrLf
 
 ; Print FareWell message
-	displayString 	OFFSET goodbye1
+	call	CrLf
+	displayString 	pGoodbye1
 	call	CrLF
 	call	CrLF
 
@@ -225,11 +248,11 @@ ReadVal PROC
 	push	ebp
 	mov		ebp, esp
 
-	mov		edx, buffer ; @ put address of buffer in edi
+	; mov		edx, buffer ; @ put address of buffer in edi
 ; Invoke the getString macro to get the user's string of digits into the buffer
-	mov		edi, [edx]
-	getString	OFFSET valuePrompt, edi
-	;displayString	buffer  ; Echo the raw string back for DEBUG
+	; mov		edi, edx
+	getString	pValuePrompt, buffer
+	displayString	buffer  ; Echo the raw string back for DEBUG
 
 RETRY:
 ; Convert digit string to numeric while validating user's input	
@@ -298,8 +321,8 @@ getUserData PROC
 	mov		ebp, esp
 
 ; 
-	mov		edi, OFFSET rawStringIn
-	push	singleData
+	mov		edi, pRawStringIn
+	push	singleInt
 	push	edi ; TODO: Pass this parameter in to this function
 	call	ReadVal
 
@@ -313,45 +336,7 @@ getUserData ENDP
 
 
 
-; +============================================================+
-displaySummary PROC
-; Description:	Displays the integers input and their sum and average
-;	        
-; Receives:		@array(reference), arraySize(value) sum (value), 
-;               average (value), @ of three string labels
-;               
-; Returns:		None
-; Pre:			array must be filled
-; Reg Changed:	
-; +------------------------------------------------------------+
-	arr		EQU	DWORD PTR [ebp + 8]
-	arrSize	EQU DWORD PTR [ebp + 12]
-	sum		EQU DWORD PTR [ebp + 16]
-	avg		EQU DWORD PTR [ebp + 20]
 
-	push	ebp
-	mov		ebp, esp
-
-	displayString OFFSET numbersMsg
-; Iterate over arr, calling writeVal to convert numbers to string and write to screen
-
-; Print sum and average messages and values
-	displayString OFFSET sumMsg
-	mov		eax, sum
-	call	WriteDec
-	call	CrLf
-
-	displayString	OFFSET avgMsg
-	mov		eax, avg
-	call	WriteDec
-	call	CrLf
-; Clean up stack and return
-	pop		ebp
-	ret		16
-
-; +------------------------------------------------------------+
-displaySummary ENDP
-; +============================================================+
 
 
 ; +============================================================+
