@@ -57,22 +57,22 @@ INCLUDE Irvine32.inc
 ; *********************
 
 ; +============================================================+
-getString MACRO promptString:REQ, outString:REQ
+; getString MACRO promptAddr:REQ, outStringAddr:REQ
 ; Description: Displays a prompt then get user's keyboard input 
-; into a memory location.	
+; into a memory location stored as a string into outString	
 ; Receives:		
 ; +------------------------------------------------------------+
-
+getString MACRO promptAddr:REQ, outStringAddr:REQ
 ; Save used registers
 	push	edx
 	push	ecx
 
 ; Display prompt for user
-	displayString promptString
+	displayString promptAddr
 
 ; Get user's keyboard input into the outString variable location
-	mov		edx, OFFSET outString
-	mov		ecx, SIZEOF outString
+	mov		edx, outStringAddr
+	mov		ecx, BUFFER_SIZE 
 	call	ReadString
 
 ; Restore registers
@@ -86,20 +86,20 @@ ENDM
 
 
 ; +============================================================+
-displayString MACRO printString:REQ
+; displayString MACRO stringAddr:REQ
 ; Description: Displays the string stored in specified mem location
 ; Receives:
 ; +------------------------------------------------------------+
-
-; Save used registers
+displayString MACRO stringAddr:REQ
+;; Save used registers
 	push	edx
 
-; Use WriteString to display the string stored in memory address	
-	mov		edx, OFFSET printString
+;; Use WriteString to display the string stored in memory address	
+	mov		edx, stringAddr
 	call	WriteString
 
 
-; Restore registers
+;; Restore registers
 	pop		edx
 
 ; +------------------------------------------------------------+
@@ -169,12 +169,12 @@ main PROC
 
 
 ; Display the program title and programmer's name & Get the user's name, and greet the user.
-	displayString 	intro
+	displayString 	OFFSET intro
 	call			CrLf
 	call			CrLF
 
 ; Display instructions for the user.
-	displayString 	instructions_1
+	displayString 	OFFSET instructions_1
 	call			CrLf
 	call			CrLF
 
@@ -194,7 +194,7 @@ main PROC
 	call	displaySummary
 
 ; Print FareWell message
-	displayString 	goodbye1
+	displayString 	OFFSET goodbye1
 	call	CrLF
 	call	CrLF
 
@@ -219,31 +219,33 @@ ReadVal PROC
 ; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
-	buffer		EQU PTR DWORD [ebp + 8]
+	buffer		EQU [ebp + 8]
 	result		EQU PTR DWORD [ebp + 12]
 
 	push	ebp
 	mov		ebp, esp
 
-
-; Invoke the getString macro to get the user's string of digits
-	getString	valuePrompt, rawStringIn
+	mov		edx, buffer ; @ put address of buffer in edi
+; Invoke the getString macro to get the user's string of digits into the buffer
+	mov		edi, [edx]
+	getString	OFFSET valuePrompt, edi
+	;displayString	buffer  ; Echo the raw string back for DEBUG
 
 RETRY:
 ; Convert digit string to numeric while validating user's input	
 
 ; move the value into eax and compare to max int possible
 	; DEBUG PURPOSES:
-;	mov		eax, 100
+	mov		eax, 100
 
 ; if good, jump to valid block
-;	mov		ebx, MAX_UNSIGNED_INT
-;	cmp		eax, ebx
-;	jb		GOOD_INPUT
+	mov		ebx, MAX_UNSIGNED_INT
+	cmp		eax, ebx
+	jb		GOOD_INPUT
 ; if bad
 ;	getString	badInputMsg, rawStringIn
-;	call		CrLF
-;	jmp			RETRY
+	call		CrLF
+	jmp			RETRY
 
 GOOD_INPUT:
 
@@ -330,16 +332,16 @@ displaySummary PROC
 	push	ebp
 	mov		ebp, esp
 
-	displayString numbersMsg
+	displayString OFFSET numbersMsg
 ; Iterate over arr, calling writeVal to convert numbers to string and write to screen
 
 ; Print sum and average messages and values
-	displayString sumMsg
+	displayString OFFSET sumMsg
 	mov		eax, sum
 	call	WriteDec
 	call	CrLf
 
-	displayString	avgMsg
+	displayString	OFFSET avgMsg
 	mov		eax, avg
 	call	WriteDec
 	call	CrLf
