@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 07:28:52
 3Programming Assignment 6    (project05-hillyer.asm	     Page 1 - 1
 
 
@@ -85,20 +85,20 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 				; +------------------------------------------------------------+
 
 				; Save used registers
-					push edx
-					push ecx
+					push	edx
+					push	ecx
 
 				; Display prompt for user
 					displayString promptString
 
 				; Get user's keyboard input into the outString variable location
-					mov	edx, OFFSET outString
-					mov	ecx, SIZEOF outString
+					mov		edx, OFFSET outString
+					mov		ecx, SIZEOF outString
 					call	ReadString
 
 				; Restore registers
-					pop ecx
-					pop edx
+					pop		ecx
+					pop		edx
 
 				; +------------------------------------------------------------+	
 				ENDM
@@ -113,15 +113,15 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 				; +------------------------------------------------------------+
 
 				; Save used registers
-					push edx
+					push	edx
 
 				; Use WriteString to display the string stored in memory address	
-					mov	edx, OFFSET printString
+					mov		edx, OFFSET printString
 					call	WriteString
-					call	CrLF
+
 
 				; Restore registers
-					pop edx
+					pop		edx
 
 				; +------------------------------------------------------------+
 				ENDM
@@ -281,10 +281,14 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
  00000251  0000000A [			userData	DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
 	    00000000
 	   ]
+ 00000279 = 00000028			userDataSize = ($ - userData)
  00000279 00000000			singleData	DWORD	?
- 0000027D  0000000B [		        rawStringIn	BYTE	BUFFER_SIZE DUP(?)
+ 0000027D  0000000B [			rawStringIn	BYTE	BUFFER_SIZE DUP(?)
 	    00
 	   ]
+ 00000288 00000000			dataSum		DWORD	0		; The sum of the userData array
+ 0000028C 00000000			dataAvg		DWORD	0		; Average of the data stored in userData array
+					
 
 
  00000000			.code
@@ -302,44 +306,53 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 
 				; Display the program title and programmer's name & Get the user's name, and greet the user.
 					displayString 	intro
- 00000000  52		     1		push edx
- 00000001  BA 00000000 R     1		mov	edx, OFFSET intro
+ 00000000  52		     1		push	edx
+ 00000001  BA 00000000 R     1		mov		edx, OFFSET intro
  00000006  E8 00000000 E     1		call	WriteString
- 0000000B  E8 00000000 E     1		call	CrLF
- 00000010  5A		     1		pop edx
- 00000011  E8 00000000 E		call			CrLf
+ 0000000B  5A		     1		pop		edx
+ 0000000C  E8 00000000 E		call			CrLf
+ 00000011  E8 00000000 E		call			CrLF
 
 				; Display instructions for the user.
 					displayString 	instructions_1
- 00000016  52		     1		push edx
- 00000017  BA 00000059 R     1		mov	edx, OFFSET instructions_1
+ 00000016  52		     1		push	edx
+ 00000017  BA 00000059 R     1		mov		edx, OFFSET instructions_1
  0000001C  E8 00000000 E     1		call	WriteString
- 00000021  E8 00000000 E     1		call	CrLF
- 00000026  5A		     1		pop edx
- 00000027  E8 00000000 E		call			CrLf
+ 00000021  5A		     1		pop		edx
+ 00000022  E8 00000000 E		call			CrLf
+ 00000027  E8 00000000 E		call			CrLF
 
 				; Prompt user for the 10 values and store them in an array
- 0000002C  E8 0000005E			call	getUserData
-
-
+ 0000002C  E8 0000007A			call	getUserData
+ 00000031  E8 00000000 E		call	CrLF
+					
 				; Print the values entered, sum, and average
- 00000031  E8 0000005E			call	displaySummary
+					; push	OFFSET	avgMsg
+					; push	OFFSET sumMsg
+					; push	OFFSET numbersMsg
+ 00000036  FF 35 0000028C R		push	dataAvg
+ 0000003C  FF 35 00000288 R		push	dataSum
+ 00000042  B8 00000028			mov		eax, userDataSize
+ 00000047  50				push	eax
+ 00000048  68 00000251 R		push	OFFSET	userData		
+ 0000004D  E8 0000005E			call	displaySummary
 
 				; Print FareWell message
 					displayString 	goodbye1
- 00000036  52		     1		push edx
- 00000037  BA 0000021F R     1		mov	edx, OFFSET goodbye1
- 0000003C  E8 00000000 E     1		call	WriteString
- 00000041  E8 00000000 E     1		call	CrLF
- 00000046  5A		     1		pop edx
+ 00000052  52		     1		push	edx
+ 00000053  BA 0000021F R     1		mov		edx, OFFSET goodbye1
+ 00000058  E8 00000000 E     1		call	WriteString
+ 0000005D  5A		     1		pop		edx
+ 0000005E  E8 00000000 E		call	CrLF
+ 00000063  E8 00000000 E		call	CrLF
 
 				; exit to operating system
 					exit	
- 00000047  6A 00	   *	    push   +000000000h
- 00000049  E8 00000000 E   *	    call   ExitProcess
+ 00000068  6A 00	   *	    push   +000000000h
+ 0000006A  E8 00000000 E   *	    call   ExitProcess
 
 				; +------------------------------------------------------------+
- 0000004E			main ENDP
+ 0000006F			main ENDP
 				; +============================================================+
 
 
@@ -348,7 +361,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 
 
 				; +============================================================+
- 0000004E			ReadVal PROC
+ 0000006F			ReadVal PROC
 				; Description:	Gets string of digits from user, then convert to
 				;               numeric and validate input.
 				; Receives:		
@@ -356,24 +369,23 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 				; Pre:			
 				; Reg Changed:	
 				; +------------------------------------------------------------+
- 0000004E  55				push	ebp
- 0000004F  8B EC			mov	ebp, esp
+ 0000006F  55				push	ebp
+ 00000070  8B EC			mov	ebp, esp
 
- 00000051			RETRY:
+ 00000072			RETRY:
 				; Invoke the getString macro to get the user's string of digits
 					getString valuePrompt, rawStringIn
- 00000051  52		     1		push edx
- 00000052  51		     1		push ecx
- 00000053  52		     2		push edx
- 00000054  BA 0000014C R     2		mov	edx, OFFSET valuePrompt
- 00000059  E8 00000000 E     2		call	WriteString
- 0000005E  E8 00000000 E     2		call	CrLF
- 00000063  5A		     2		pop edx
- 00000064  BA 0000027D R     1		mov	edx, OFFSET rawStringIn
- 00000069  B9 0000000B	     1		mov	ecx, SIZEOF rawStringIn
- 0000006E  E8 00000000 E     1		call	ReadString
- 00000073  59		     1		pop ecx
- 00000074  5A		     1		pop edx
+ 00000072  52		     1		push	edx
+ 00000073  51		     1		push	ecx
+ 00000074  52		     2		push	edx
+ 00000075  BA 0000014C R     2		mov		edx, OFFSET valuePrompt
+ 0000007A  E8 00000000 E     2		call	WriteString
+ 0000007F  5A		     2		pop		edx
+ 00000080  BA 0000027D R     1		mov		edx, OFFSET rawStringIn
+ 00000085  B9 0000000B	     1		mov		ecx, SIZEOF rawStringIn
+ 0000008A  E8 00000000 E     1		call	ReadString
+ 0000008F  59		     1		pop		ecx
+ 00000090  5A		     1		pop		edx
 
 
 				; Convert digit string to numeric while validating user's input	
@@ -382,28 +394,28 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 
 				; if bad
 					displayString badInputMsg
- 00000075  52		     1		push edx
- 00000076  BA 0000016F R     1		mov	edx, OFFSET badInputMsg
- 0000007B  E8 00000000 E     1		call	WriteString
- 00000080  E8 00000000 E     1		call	CrLF
- 00000085  5A		     1		pop edx
- 00000086  EB C9			jmp	RETRY
- 00000088			INPUT_VALID:
+ 00000091  52		     1		push	edx
+ 00000092  BA 0000016F R     1		mov		edx, OFFSET badInputMsg
+ 00000097  E8 00000000 E     1		call	WriteString
+ 0000009C  5A		     1		pop		edx
+ 0000009D  E8 00000000 E		call	CrLF
+ 000000A2  EB CE			jmp	RETRY
+ 000000A4			INPUT_VALID:
 
 				; return value by reference?
 					; mov	referenceVal, eax
 
 				; Clean up stack and return
- 00000088  5D				pop		ebp
- 00000089  C3				ret
+ 000000A4  5D				pop		ebp
+ 000000A5  C3				ret
 
 				; +------------------------------------------------------------+
- 0000008A			ReadVal ENDP
+ 000000A6			ReadVal ENDP
 				; +============================================================+
 
 
 				; +============================================================+
- 0000008A			WriteVal PROC
+ 000000A6			WriteVal PROC
 				; Description:	Convert numeric value to a string of digits and
 				;	        invoke the displayString macro to produce output
 				; Receives:		
@@ -411,8 +423,8 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 				; Pre:			
 				; Reg Changed:	
 				; +------------------------------------------------------------+
- 0000008A  55				push	ebp
- 0000008B  8B EC			mov	ebp, esp
+ 000000A6  55				push	ebp
+ 000000A7  8B EC			mov	ebp, esp
 				COMMENT !
 				Psuedocode:
 
@@ -422,17 +434,17 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 
 
 				; Clean up stack and return
- 0000008D  5D				pop		ebp
- 0000008E  C3				ret
+ 000000A9  5D				pop		ebp
+ 000000AA  C3				ret
 
 				; +------------------------------------------------------------+
- 0000008F			WriteVal ENDP
+ 000000AB			WriteVal ENDP
 				; +============================================================+
 
 
 
 				; +============================================================+
- 0000008F			getUserData PROC
+ 000000AB			getUserData PROC
 				; Description:	
 				;	        
 				; Receives:		
@@ -440,8 +452,8 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 				; Pre:			
 				; Reg Changed:	
 				; +------------------------------------------------------------+
- 0000008F  55				push	ebp
- 00000090  8B EC			mov	ebp, esp
+ 000000AB  55				push	ebp
+ 000000AC  8B EC			mov	ebp, esp
 
 				COMMENT !
 				Psuedocode:
@@ -452,41 +464,65 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 
 
 				; Clean up stack and return
- 00000092  5D				pop		ebp
- 00000093  C3				ret
+ 000000AE  5D				pop		ebp
+ 000000AF  C3				ret
 
 				; +------------------------------------------------------------+
- 00000094			getUserData ENDP
+ 000000B0			getUserData ENDP
 				; +============================================================+
 
 
 
 				; +============================================================+
- 00000094			displaySummary PROC
-				; Description:	
+ 000000B0			displaySummary PROC
+				; Description:	Displays the integers input and their sum and average
 				;	        
-				; Receives:		
-				; Returns:		
-				; Pre:			
+				; Receives:		@array(reference), arraySize(value) sum (value), 
+				;               average (value), @ of three string labels
+				;               
+				; Returns:		None
+				; Pre:			array must be filled
 				; Reg Changed:	
 				; +------------------------------------------------------------+
- 00000094  55				push	ebp
- 00000095  8B EC			mov	ebp, esp
+ = DWORD PTR [ebp + 8]			arr		EQU	DWORD PTR [ebp + 8]
+ = DWORD PTR [ebp + 12]			arrSize	EQU DWORD PTR [ebp + 12]
+ = DWORD PTR [ebp + 16]			sum		EQU DWORD PTR [ebp + 16]
+ = DWORD PTR [ebp + 20]			avg		EQU DWORD PTR [ebp + 20]
 
-				COMMENT !
-				Psuedocode:
+ 000000B0  55				push	ebp
+ 000000B1  8B EC			mov		ebp, esp
 
+					displayString numbersMsg
+ 000000B3  52		     1		push	edx
+ 000000B4  BA 000001CC R     1		mov		edx, OFFSET numbersMsg
+ 000000B9  E8 00000000 E     1		call	WriteString
+ 000000BE  5A		     1		pop		edx
+				; Iterate over arr, calling writeVal to convert numbers to string and write to screen
 
+				; Print sum and average messages and values
+					displayString sumMsg
+ 000000BF  52		     1		push	edx
+ 000000C0  BA 000001F0 R     1		mov		edx, OFFSET sumMsg
+ 000000C5  E8 00000000 E     1		call	WriteString
+ 000000CA  5A		     1		pop		edx
+ 000000CB  8B 45 10			mov		eax, sum
+ 000000CE  E8 00000000 E		call	WriteDec
+ 000000D3  E8 00000000 E		call	CrLf
 
-				!	
-
-
+					displayString	avgMsg
+ 000000D8  52		     1		push	edx
+ 000000D9  BA 0000020E R     1		mov		edx, OFFSET avgMsg
+ 000000DE  E8 00000000 E     1		call	WriteString
+ 000000E3  5A		     1		pop		edx
+ 000000E4  8B 45 14			mov		eax, avg
+ 000000E7  E8 00000000 E		call	WriteDec
+ 000000EC  E8 00000000 E		call	CrLf
 				; Clean up stack and return
- 00000097  5D				pop		ebp
- 00000098  C3				ret
+ 000000F1  5D				pop		ebp
+ 000000F2  C2 0010			ret		16
 
 				; +------------------------------------------------------------+
- 00000099			displaySummary ENDP
+ 000000F5			displaySummary ENDP
 				; +============================================================+
 
 
@@ -518,7 +554,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
 				someprocess ENDP
 				; +------------------------------------------------------------+
 
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 07:28:52
 3Programming Assignment 6    (project05-hillyer.asm	     Symbols 2 - 1
 
 
@@ -620,8 +656,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000288 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000099 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000290 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000000F5 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -691,9 +727,9 @@ ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-ReadVal  . . . . . . . . . . . .	P Near	 0000004E _TEXT	Length= 0000003C Public STDCALL
-  RETRY  . . . . . . . . . . . .	L Near	 00000051 _TEXT	
-  INPUT_VALID  . . . . . . . . .	L Near	 00000088 _TEXT	
+ReadVal  . . . . . . . . . . . .	P Near	 0000006F _TEXT	Length= 00000037 Public STDCALL
+  RETRY  . . . . . . . . . . . .	L Near	 00000072 _TEXT	
+  INPUT_VALID  . . . . . . . . .	L Near	 000000A4 _TEXT	
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -730,11 +766,11 @@ WriteStackFrameName  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-WriteVal . . . . . . . . . . . .	P Near	 0000008A _TEXT	Length= 00000005 Public STDCALL
+WriteVal . . . . . . . . . . . .	P Near	 000000A6 _TEXT	Length= 00000005 Public STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-displaySummary . . . . . . . . .	P Near	 00000094 _TEXT	Length= 00000005 Public STDCALL
-getUserData  . . . . . . . . . .	P Near	 0000008F _TEXT	Length= 00000005 Public STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000004E Public STDCALL
+displaySummary . . . . . . . . .	P Near	 000000B0 _TEXT	Length= 00000045 Public STDCALL
+getUserData  . . . . . . . . . .	P Near	 000000AB _TEXT	Length= 00000005 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000006F Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -957,12 +993,17 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+arrSize  . . . . . . . . . . . .	Text   	 DWORD PTR [ebp + 12]
+arr  . . . . . . . . . . . . . .	Text   	 DWORD PTR [ebp + 8]
 avgMsg . . . . . . . . . . . . .	Byte	 0000020E _DATA	
+avg  . . . . . . . . . . . . . .	Text   	 DWORD PTR [ebp + 20]
 badInputMsg  . . . . . . . . . .	Byte	 0000016F _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
+dataAvg  . . . . . . . . . . . .	DWord	 0000028C _DATA	
+dataSum  . . . . . . . . . . . .	DWord	 00000288 _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 goodbye1 . . . . . . . . . . . .	Byte	 0000021F _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
@@ -981,6 +1022,8 @@ rawStringIn  . . . . . . . . . .	Byte	 0000027D _DATA
 red  . . . . . . . . . . . . . .	Number	 00000004h   
 singleData . . . . . . . . . . .	DWord	 00000279 _DATA	
 sumMsg . . . . . . . . . . . . .	Byte	 000001F0 _DATA	
+sum  . . . . . . . . . . . . . .	Text   	 DWORD PTR [ebp + 16]
+userDataSize . . . . . . . . . .	Number	 00000028h   
 userData . . . . . . . . . . . .	DWord	 00000251 _DATA	
 valuePrompt  . . . . . . . . . .	Byte	 0000014C _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   

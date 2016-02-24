@@ -64,8 +64,8 @@ getString MACRO promptString:REQ, outString:REQ
 ; +------------------------------------------------------------+
 
 ; Save used registers
-	push edx
-	push ecx
+	push	edx
+	push	ecx
 
 ; Display prompt for user
 	displayString promptString
@@ -92,12 +92,12 @@ displayString MACRO printString:REQ
 ; +------------------------------------------------------------+
 
 ; Save used registers
-	push edx
+	push	edx
 
 ; Use WriteString to display the string stored in memory address	
 	mov		edx, OFFSET printString
 	call	WriteString
-	call	CrLF
+
 
 ; Restore registers
 	pop		edx
@@ -147,8 +147,12 @@ BUFFER_SIZE = DATA_ARRAY_SIZE + 1
 
 ; Data Variables
 	userData	DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
+	userDataSize = ($ - userData)
 	singleData	DWORD	?
-        rawStringIn	BYTE	BUFFER_SIZE DUP(?)
+	rawStringIn	BYTE	BUFFER_SIZE DUP(?)
+	dataSum		DWORD	0		; The sum of the userData array
+	dataAvg		DWORD	0		; Average of the data stored in userData array
+	
 
 
 .code
@@ -167,20 +171,32 @@ main PROC
 ; Display the program title and programmer's name & Get the user's name, and greet the user.
 	displayString 	intro
 	call			CrLf
+	call			CrLF
 
 ; Display instructions for the user.
 	displayString 	instructions_1
 	call			CrLf
+	call			CrLF
 
 ; Prompt user for the 10 values and store them in an array
 	call	getUserData
-
-
+	call	CrLF
+	
 ; Print the values entered, sum, and average
+	; push	OFFSET	avgMsg
+	; push	OFFSET sumMsg
+	; push	OFFSET numbersMsg
+	push	dataAvg
+	push	dataSum
+	mov		eax, userDataSize
+	push	eax
+	push	OFFSET	userData		
 	call	displaySummary
 
 ; Print FareWell message
 	displayString 	goodbye1
+	call	CrLF
+	call	CrLF
 
 ; exit to operating system
 	exit	
@@ -217,6 +233,7 @@ RETRY:
 
 ; if bad
 	displayString badInputMsg
+	call	CrLF
 	jmp	RETRY
 INPUT_VALID:
 
@@ -275,9 +292,6 @@ getUserData PROC
 
 COMMENT !
 Psuedocode:
-
-
-
 !	
 
 
@@ -302,20 +316,30 @@ displaySummary PROC
 ; Pre:			array must be filled
 ; Reg Changed:	
 ; +------------------------------------------------------------+
+	arr		EQU	DWORD PTR [ebp + 8]
+	arrSize	EQU DWORD PTR [ebp + 12]
+	sum		EQU DWORD PTR [ebp + 16]
+	avg		EQU DWORD PTR [ebp + 20]
+
 	push	ebp
-	mov	ebp, esp
+	mov		ebp, esp
 
-COMMENT !
-Psuedocode:
+	displayString numbersMsg
+; Iterate over arr, calling writeVal to convert numbers to string and write to screen
 
+; Print sum and average messages and values
+	displayString sumMsg
+	mov		eax, sum
+	call	WriteDec
+	call	CrLf
 
-
-!	
-
-
+	displayString	avgMsg
+	mov		eax, avg
+	call	WriteDec
+	call	CrLf
 ; Clean up stack and return
 	pop		ebp
-	ret
+	ret		16
 
 ; +------------------------------------------------------------+
 displaySummary ENDP
