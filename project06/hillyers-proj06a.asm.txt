@@ -1,0 +1,347 @@
+TITLE Programming Assignment 6    (project05-hillyer.asm)
+; =====================================================================================
+; Author:                  Shawn S Hillyer
+; Email:                   hillyers@oregonstate.edu
+; CS271-400 / Project ID:  Programming Assignment 6
+; Due Date:                03/13/2016
+; =====================================================================================
+
+; =====================================================================================
+; [Problem Definition]
+; + Implement and test your own ReadVal and WriteVal procedures for unsigned integers.
+; + Implement macros getString and displayString. The macros may use Irvine’s ReadString 
+;   to get input from the user, and WriteString to display output.
+;   - getString should display a prompt, then get the user’s keyboard input into a 
+;     memory location
+;   - displayString should the string stored in a specified memory location.
+;   - readVal should invoke the getString macro to get the user’s string of digits. 
+;     It should then convert the digit string to numeric, while validating the user’s 
+;     input.
+;   - writeVal should convert a numeric value to a string of digits, and invoke the 
+;     displayString macro to produce the output.
+; + Write a small test program that gets 10 valid integers from the user and stores 
+;   the numeric values in an array. The program then displays the integers, 
+;   their sum, and their average.
+; =====================================================================================
+
+; =====================================================================================
+; [Requirements]
+;  1) User’s numeric input must be validated the hard way: Read the user's input as a 
+;     string, and convert the string to numeric form. If the user enters non-digits or 
+;     the number is too large for 32-bit registers, an error message should be displayed
+;     and the number should be discarded.
+;  2) Conversion routines must appropriately use the lodsb and/or stosb operators.
+;  3) All procedure parameters must be passed on the system stack.
+;  4) Addresses of prompts, identifying strings, and other memory locations should be 
+;     passed by address to the macros.
+;  5) Used registers must be saved and restored by the called procedures and macros.
+;  6) The stack must be “cleaned up” by the called procedure.
+;  7) The usual requirements regarding documentation, readability, user-friendliness, etc., apply.
+;  8) Submit your text code file (.asm) to Canvas by the due date.
+; =====================================================================================
+
+; =====================================================================================
+; [Extra-credit options]
+; [Not Implemented]	1. [1 point ]: Number each line of user input and display a 
+;                          running subtotal of the user's numbers
+; [Not Implemented]	2. [2 points]: Handle signed integers.
+; [Not Implemented]	3. [3 points]: make your ReadVal and WriteVal procedures recursive.
+; [Not Implemented]	4. [4 points]: implement procedures ReadVal and WriteVal for 
+;                          floating point values, using the FPU.
+
+INCLUDE Irvine32.inc
+
+
+; *********************
+; Macros              *
+; *********************
+
+; +============================================================+
+getString MACRO promptString:REQ, outString:REQ
+; Description: Displays a prompt then get user's keyboard input 
+; into a memory location.	
+; Receives:		
+; +------------------------------------------------------------+
+
+; Save used registers
+	push edx
+	push ecx
+
+; Display prompt for user
+	displayString promptString
+
+; Get user's keyboard input into the outString variable location
+	mov	edx, OFFSET outString
+	mov	ecx, SIZEOF outString
+	call	ReadString
+
+; Restore registers
+	pop ecx
+	pop edx
+
+; +------------------------------------------------------------+	
+ENDM
+; +============================================================+
+
+
+
+; +============================================================+
+displayString MACRO printString:REQ
+; Description: Displays the string stored in specified mem location
+; Receives:
+; +------------------------------------------------------------+
+
+; Save used registers
+	push edx
+
+; Use WriteString to display the string stored in memory address	
+	mov	edx, OFFSET printString
+	call	WriteString
+
+; Restore registers
+	pop edx
+
+; +------------------------------------------------------------+
+ENDM
+; +============================================================+
+
+
+
+; *********************
+; Constants           *
+; *********************
+MAX_UNSIGNED_INT = 4294967295   ; maximum value that fits in 32 bit unsigned DWORD
+MAX_DIGITS = 10                 ; maximum digits that a user can enter and still (possibly) be 32 bit unsigned int
+DATA_ARRAY_SIZE = 10
+BUFFER_SIZE = DATA_ARRAY_SIZE + 1
+
+; *********************
+; Variables           *
+; *********************
+.data
+
+; Strings - Output
+	intro			BYTE	"PROGRAMMING ASSIGNMENT 6: Designing low-level I/O procedures",0Dh,0Ah
+				BYTE	Written by Shawn S Hillyer",0
+;	ecIntro_1		BYTE	"**EC: ",0
+;	ecIntro_2		BYTE	"**EC: ",0
+;	ecIntro_3		BYTE	"**EC: ",0
+;	ecIntro_4		BYTE	"**EC: ",0
+	
+	instructions_1	BYTE	"Please provide 10 unsigned decimal integers.",0Dh,0Ah
+			BYTE	"Each number needs to be small enough to fit inside a 32 bit register.",0Dh,0Ah
+			BYTE	"After you have finished inputting the raw numbers I will display a list",0Dh,0Ah
+			BYTE	"of the integers, their sum, and their average value.",0
+
+	valuePrompt	BYTE	"Please enter an unsigned number:  ",0
+	badInputMsg	BYTE	"ERROR: You did not enter an unsigned number or your number was too big.",0Dh,0Ah
+			BYTE	"Please try again:  ",0
+
+	numbersMsg	BYTE	"You entered the following numbers: ",0
+	sumMsg		BYTE	"The sum of these numbers is: ",0
+	avgMsg		BYTE	"The average is: ",0
+
+	goodbye1	BYTE	"Getting down low with the in and the out was fun!",0
+
+
+; Data Variables
+	userData	DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
+	singleData	DWORD	?
+        rawStringIn	BYTE	BUFFER_SIZE DUP(?)
+
+
+.code
+
+; +============================================================+
+main PROC
+; Description:	Main program logic. Generates random numbers, prints
+;   in unsorted order, then sorts and prints median and sorted order.
+; Receives:		None
+; Returns:		None
+; Pre:			None
+; Reg Changed:	Potentially all - main entrypoint
+; +------------------------------------------------------------+
+
+
+; Display the program title and programmer's name & Get the user's name, and greet the user.
+	displayString 	intro
+
+; Display instructions for the user.
+	displayString 	instructions_1
+
+; Prompt user for the 10 values and store them in an array
+	call	getUserData
+
+
+; Print the values entered, sum, and average
+	call	displaySummary
+
+; Print FareWell message
+	displayString 	goodbye1
+
+; exit to operating system
+	exit	
+
+; +------------------------------------------------------------+
+main ENDP
+; +============================================================+
+
+
+
+
+
+
+; +============================================================+
+ReadVal PROC
+; Description:	Gets string of digits from user, then convert to
+;               numeric and validate input.
+; Receives:		
+; Returns:		
+; Pre:			
+; Reg Changed:	
+; +------------------------------------------------------------+
+	push	ebp
+	mov	ebp, esp
+
+RETRY:
+; Invoke the getString macro to get the user's string of digits
+	getString valuePrompt, rawStringIn
+
+
+; Convert digit string to numeric while validating user's input	
+
+; if good, jump to valid block
+
+; if bad
+	displayString badInputMsg
+	jmp	RETRY
+INPUT_VALID:
+
+; return value by reference?
+	; mov	referenceVal, eax
+
+; Clean up stack and return
+	pop		ebp
+	ret
+
+; +------------------------------------------------------------+
+ReadVal ENDP
+; +============================================================+
+
+
+; +============================================================+
+WriteVal PROC
+; Description:	Convert numeric value to a string of digits and
+;	        invoke the displayString macro to produce output
+; Receives:		
+; Returns:		
+; Pre:			
+; Reg Changed:	
+; +------------------------------------------------------------+
+	push	ebp
+	mov	ebp, esp
+COMMENT !
+Psuedocode:
+
+
+
+!	
+
+
+; Clean up stack and return
+	pop		ebp
+	ret
+
+; +------------------------------------------------------------+
+WriteVal ENDP
+; +============================================================+
+
+
+
+; +============================================================+
+getUserData PROC
+; Description:	
+;	        
+; Receives:		
+; Returns:		
+; Pre:			
+; Reg Changed:	
+; +------------------------------------------------------------+
+	push	ebp
+	mov	ebp, esp
+
+COMMENT !
+Psuedocode:
+
+
+
+!	
+
+
+; Clean up stack and return
+	pop		ebp
+	ret
+
+; +------------------------------------------------------------+
+getUserData ENDP
+; +============================================================+
+
+
+
+; +============================================================+
+displaySummary PROC
+; Description:	
+;	        
+; Receives:		
+; Returns:		
+; Pre:			
+; Reg Changed:	
+; +------------------------------------------------------------+
+	push	ebp
+	mov	ebp, esp
+
+COMMENT !
+Psuedocode:
+
+
+
+!	
+
+
+; Clean up stack and return
+	pop		ebp
+	ret
+
+; +------------------------------------------------------------+
+displaySummary ENDP
+; +============================================================+
+
+
+; +============================================================+
+END main
+; +============================================================+
+
+
+
+
+
+; +============================================================+
+; The below should not compile - template for functions
+
+
+; +============================================================+
+someprocess PROC
+; Description:	
+;	
+; Receives:		
+; Returns:		
+; Pre:			
+; Reg Changed:	
+; +============================================================+
+
+	
+	ret
+; +------------------------------------------------------------+
+someprocess ENDP
+; +------------------------------------------------------------+
+
