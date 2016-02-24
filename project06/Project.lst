@@ -1,12 +1,57 @@
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/03/16 23:24:54
-#Program Template     (template.asm			     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
+3Programming Assignment 6    (project05-hillyer.asm	     Page 1 - 1
 
 
-				TITLE Program Template     (template.asm)
+				TITLE Programming Assignment 6    (project05-hillyer.asm)
+				; =====================================================================================
+				; Author:                  Shawn S Hillyer
+				; Email:                   hillyers@oregonstate.edu
+				; CS271-400 / Project ID:  Programming Assignment 6
+				; Due Date:                03/13/2016
+				; =====================================================================================
 
-				; Author:
-				; Course / Project ID                 Date:
-				; Description:
+				; =====================================================================================
+				; [Problem Definition]
+				; + Implement and test your own ReadVal and WriteVal procedures for unsigned integers.
+				; + Implement macros getString and displayString. The macros may use Irvine’s ReadString 
+				;   to get input from the user, and WriteString to display output.
+				;   - getString should display a prompt, then get the user’s keyboard input into a 
+				;     memory location
+				;   - displayString should the string stored in a specified memory location.
+				;   - readVal should invoke the getString macro to get the user’s string of digits. 
+				;     It should then convert the digit string to numeric, while validating the user’s 
+				;     input.
+				;   - writeVal should convert a numeric value to a string of digits, and invoke the 
+				;     displayString macro to produce the output.
+				; + Write a small test program that gets 10 valid integers from the user and stores 
+				;   the numeric values in an array. The program then displays the integers, 
+				;   their sum, and their average.
+				; =====================================================================================
+
+				; =====================================================================================
+				; [Requirements]
+				;  1) User’s numeric input must be validated the hard way: Read the user's input as a 
+				;     string, and convert the string to numeric form. If the user enters non-digits or 
+				;     the number is too large for 32-bit registers, an error message should be displayed
+				;     and the number should be discarded.
+				;  2) Conversion routines must appropriately use the lodsb and/or stosb operators.
+				;  3) All procedure parameters must be passed on the system stack.
+				;  4) Addresses of prompts, identifying strings, and other memory locations should be 
+				;     passed by address to the macros.
+				;  5) Used registers must be saved and restored by the called procedures and macros.
+				;  6) The stack must be “cleaned up” by the called procedure.
+				;  7) The usual requirements regarding documentation, readability, user-friendliness, etc., apply.
+				;  8) Submit your text code file (.asm) to Canvas by the due date.
+				; =====================================================================================
+
+				; =====================================================================================
+				; [Extra-credit options]
+				; [Not Implemented]	1. [1 point ]: Number each line of user input and display a 
+				;                          running subtotal of the user's numbers
+				; [Not Implemented]	2. [2 points]: Handle signed integers.
+				; [Not Implemented]	3. [3 points]: make your ReadVal and WriteVal procedures recursive.
+				; [Not Implemented]	4. [4 points]: implement procedures ReadVal and WriteVal for 
+				;                          floating point values, using the FPU.
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -27,29 +72,464 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/03/16 23:24:54
 			      C .LIST
 			      C 
 
-				; (insert constant definitions here)
 
+				; *********************
+				; Macros              *
+				; *********************
+
+				; +============================================================+
+				getString MACRO promptString:REQ, outString:REQ
+				; Description: Displays a prompt then get user's keyboard input 
+				; into a memory location.	
+				; Receives:		
+				; +------------------------------------------------------------+
+
+				; Save used registers
+					push edx
+					push ecx
+
+				; Display prompt for user
+					displayString promptString
+
+				; Get user's keyboard input into the outString variable location
+					mov	edx, OFFSET outString
+					mov	ecx, SIZEOF outString
+					call	ReadString
+
+				; Restore registers
+					pop ecx
+					pop edx
+
+				; +------------------------------------------------------------+	
+				ENDM
+				; +============================================================+
+
+
+
+				; +============================================================+
+				displayString MACRO printString:REQ
+				; Description: Displays the string stored in specified mem location
+				; Receives:
+				; +------------------------------------------------------------+
+
+				; Save used registers
+					push edx
+
+				; Use WriteString to display the string stored in memory address	
+					mov	edx, OFFSET printString
+					call	WriteString
+					call	CrLF
+
+				; Restore registers
+					pop edx
+
+				; +------------------------------------------------------------+
+				ENDM
+				; +============================================================+
+
+
+
+				; *********************
+				; Constants           *
+				; *********************
+ = FFFFFFFF			MAX_UNSIGNED_INT = 4294967295   ; maximum value that fits in 32 bit unsigned DWORD
+ = 0000000A			MAX_DIGITS = 10                 ; maximum digits that a user can enter and still (possibly) be 32 bit unsigned int
+ = 0000000A			DATA_ARRAY_SIZE = 10
+ = 0000000B			BUFFER_SIZE = DATA_ARRAY_SIZE + 1
+
+				; *********************
+				; Variables           *
+				; *********************
  00000000			.data
 
-				; (insert variable definitions here)
+				; Strings - Output
+ 00000000 50 52 4F 47 52		intro			BYTE	"PROGRAMMING ASSIGNMENT 6: Designing low-level I/O procedures",0Dh,0Ah
+	   41 4D 4D 49 4E
+	   47 20 41 53 53
+	   49 47 4E 4D 45
+	   4E 54 20 36 3A
+	   20 44 65 73 69
+	   67 6E 69 6E 67
+	   20 6C 6F 77 2D
+	   6C 65 76 65 6C
+	   20 49 2F 4F 20
+	   70 72 6F 63 65
+	   64 75 72 65 73
+	   0D 0A
+ 0000003E  57 72 69 74 74						BYTE	"Written by Shawn S Hillyer",0
+	   65 6E 20 62 79
+	   20 53 68 61 77
+	   6E 20 53 20 48
+	   69 6C 6C 79 65
+	   72 00
+				;	ecIntro_1		BYTE	"**EC: ",0
+				;	ecIntro_2		BYTE	"**EC: ",0
+				;	ecIntro_3		BYTE	"**EC: ",0
+				;	ecIntro_4		BYTE	"**EC: ",0
+					
+ 00000059 50 6C 65 61 73		instructions_1	BYTE	"Please provide 10 unsigned decimal integers.",0Dh,0Ah
+	   65 20 70 72 6F
+	   76 69 64 65 20
+	   31 30 20 75 6E
+	   73 69 67 6E 65
+	   64 20 64 65 63
+	   69 6D 61 6C 20
+	   69 6E 74 65 67
+	   65 72 73 2E 0D
+	   0A
+ 00000087  45 61 63 68 20						BYTE	"Each number needs to be small enough to fit inside a 32 bit register.",0Dh,0Ah
+	   6E 75 6D 62 65
+	   72 20 6E 65 65
+	   64 73 20 74 6F
+	   20 62 65 20 73
+	   6D 61 6C 6C 20
+	   65 6E 6F 75 67
+	   68 20 74 6F 20
+	   66 69 74 20 69
+	   6E 73 69 64 65
+	   20 61 20 33 32
+	   20 62 69 74 20
+	   72 65 67 69 73
+	   74 65 72 2E 0D
+	   0A
+ 000000CE  41 66 74 65 72						BYTE	"After you have finished inputting the raw numbers I will display a list",0Dh,0Ah
+	   20 79 6F 75 20
+	   68 61 76 65 20
+	   66 69 6E 69 73
+	   68 65 64 20 69
+	   6E 70 75 74 74
+	   69 6E 67 20 74
+	   68 65 20 72 61
+	   77 20 6E 75 6D
+	   62 65 72 73 20
+	   49 20 77 69 6C
+	   6C 20 64 69 73
+	   70 6C 61 79 20
+	   61 20 6C 69 73
+	   74 0D 0A
+ 00000117  6F 66 20 74 68						BYTE	"of the integers, their sum, and their average value.",0
+	   65 20 69 6E 74
+	   65 67 65 72 73
+	   2C 20 74 68 65
+	   69 72 20 73 75
+	   6D 2C 20 61 6E
+	   64 20 74 68 65
+	   69 72 20 61 76
+	   65 72 61 67 65
+	   20 76 61 6C 75
+	   65 2E 00
+
+ 0000014C 50 6C 65 61 73		valuePrompt		BYTE	"Please enter an unsigned number:  ",0
+	   65 20 65 6E 74
+	   65 72 20 61 6E
+	   20 75 6E 73 69
+	   67 6E 65 64 20
+	   6E 75 6D 62 65
+	   72 3A 20 20 00
+ 0000016F 45 52 52 4F 52		badInputMsg		BYTE	"ERROR: You did not enter an unsigned number or your number was too big.",0Dh,0Ah
+	   3A 20 59 6F 75
+	   20 64 69 64 20
+	   6E 6F 74 20 65
+	   6E 74 65 72 20
+	   61 6E 20 75 6E
+	   73 69 67 6E 65
+	   64 20 6E 75 6D
+	   62 65 72 20 6F
+	   72 20 79 6F 75
+	   72 20 6E 75 6D
+	   62 65 72 20 77
+	   61 73 20 74 6F
+	   6F 20 62 69 67
+	   2E 0D 0A
+ 000001B8  50 6C 65 61 73						BYTE	"Please try again:  ",0
+	   65 20 74 72 79
+	   20 61 67 61 69
+	   6E 3A 20 20 00
+
+ 000001CC 59 6F 75 20 65		numbersMsg		BYTE	"You entered the following numbers: ",0
+	   6E 74 65 72 65
+	   64 20 74 68 65
+	   20 66 6F 6C 6C
+	   6F 77 69 6E 67
+	   20 6E 75 6D 62
+	   65 72 73 3A 20
+	   00
+ 000001F0 54 68 65 20 73		sumMsg			BYTE	"The sum of these numbers is: ",0
+	   75 6D 20 6F 66
+	   20 74 68 65 73
+	   65 20 6E 75 6D
+	   62 65 72 73 20
+	   69 73 3A 20 00
+ 0000020E 54 68 65 20 61		avgMsg			BYTE	"The average is: ",0
+	   76 65 72 61 67
+	   65 20 69 73 3A
+	   20 00
+
+ 0000021F 47 65 74 74 69		goodbye1		BYTE	"Getting down low with the in and the out was fun!",0
+	   6E 67 20 64 6F
+	   77 6E 20 6C 6F
+	   77 20 77 69 74
+	   68 20 74 68 65
+	   20 69 6E 20 61
+	   6E 64 20 74 68
+	   65 20 6F 75 74
+	   20 77 61 73 20
+	   66 75 6E 21 00
+
+
+				; Data Variables
+ 00000251  0000000A [			userData	DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
+	    00000000
+	   ]
+ 00000279 00000000			singleData	DWORD	?
+ 0000027D  0000000B [		        rawStringIn	BYTE	BUFFER_SIZE DUP(?)
+	    00
+	   ]
+
 
  00000000			.code
+
+				; +============================================================+
  00000000			main PROC
+				; Description:	Main program logic. Generates random numbers, prints
+				;   in unsorted order, then sorts and prints median and sorted order.
+				; Receives:		None
+				; Returns:		None
+				; Pre:			None
+				; Reg Changed:	Potentially all - main entrypoint
+				; +------------------------------------------------------------+
 
-				; (insert executable instructions here)
 
-					exit	; exit to operating system
- 00000000  6A 00	   *	    push   +000000000h
- 00000002  E8 00000000 E   *	    call   ExitProcess
- 00000007			main ENDP
+				; Display the program title and programmer's name & Get the user's name, and greet the user.
+					displayString 	intro
+ 00000000  52		     1		push edx
+ 00000001  BA 00000000 R     1		mov	edx, OFFSET intro
+ 00000006  E8 00000000 E     1		call	WriteString
+ 0000000B  E8 00000000 E     1		call	CrLF
+ 00000010  5A		     1		pop edx
+ 00000011  E8 00000000 E		call			CrLf
 
-				; (insert additional procedures here)
+				; Display instructions for the user.
+					displayString 	instructions_1
+ 00000016  52		     1		push edx
+ 00000017  BA 00000059 R     1		mov	edx, OFFSET instructions_1
+ 0000001C  E8 00000000 E     1		call	WriteString
+ 00000021  E8 00000000 E     1		call	CrLF
+ 00000026  5A		     1		pop edx
+ 00000027  E8 00000000 E		call			CrLf
 
+				; Prompt user for the 10 values and store them in an array
+ 0000002C  E8 0000005E			call	getUserData
+
+
+				; Print the values entered, sum, and average
+ 00000031  E8 0000005E			call	displaySummary
+
+				; Print FareWell message
+					displayString 	goodbye1
+ 00000036  52		     1		push edx
+ 00000037  BA 0000021F R     1		mov	edx, OFFSET goodbye1
+ 0000003C  E8 00000000 E     1		call	WriteString
+ 00000041  E8 00000000 E     1		call	CrLF
+ 00000046  5A		     1		pop edx
+
+				; exit to operating system
+					exit	
+ 00000047  6A 00	   *	    push   +000000000h
+ 00000049  E8 00000000 E   *	    call   ExitProcess
+
+				; +------------------------------------------------------------+
+ 0000004E			main ENDP
+				; +============================================================+
+
+
+
+
+
+
+				; +============================================================+
+ 0000004E			ReadVal PROC
+				; Description:	Gets string of digits from user, then convert to
+				;               numeric and validate input.
+				; Receives:		
+				; Returns:		
+				; Pre:			
+				; Reg Changed:	
+				; +------------------------------------------------------------+
+ 0000004E  55				push	ebp
+ 0000004F  8B EC			mov	ebp, esp
+
+ 00000051			RETRY:
+				; Invoke the getString macro to get the user's string of digits
+					getString valuePrompt, rawStringIn
+ 00000051  52		     1		push edx
+ 00000052  51		     1		push ecx
+ 00000053  52		     2		push edx
+ 00000054  BA 0000014C R     2		mov	edx, OFFSET valuePrompt
+ 00000059  E8 00000000 E     2		call	WriteString
+ 0000005E  E8 00000000 E     2		call	CrLF
+ 00000063  5A		     2		pop edx
+ 00000064  BA 0000027D R     1		mov	edx, OFFSET rawStringIn
+ 00000069  B9 0000000B	     1		mov	ecx, SIZEOF rawStringIn
+ 0000006E  E8 00000000 E     1		call	ReadString
+ 00000073  59		     1		pop ecx
+ 00000074  5A		     1		pop edx
+
+
+				; Convert digit string to numeric while validating user's input	
+
+				; if good, jump to valid block
+
+				; if bad
+					displayString badInputMsg
+ 00000075  52		     1		push edx
+ 00000076  BA 0000016F R     1		mov	edx, OFFSET badInputMsg
+ 0000007B  E8 00000000 E     1		call	WriteString
+ 00000080  E8 00000000 E     1		call	CrLF
+ 00000085  5A		     1		pop edx
+ 00000086  EB C9			jmp	RETRY
+ 00000088			INPUT_VALID:
+
+				; return value by reference?
+					; mov	referenceVal, eax
+
+				; Clean up stack and return
+ 00000088  5D				pop		ebp
+ 00000089  C3				ret
+
+				; +------------------------------------------------------------+
+ 0000008A			ReadVal ENDP
+				; +============================================================+
+
+
+				; +============================================================+
+ 0000008A			WriteVal PROC
+				; Description:	Convert numeric value to a string of digits and
+				;	        invoke the displayString macro to produce output
+				; Receives:		
+				; Returns:		
+				; Pre:			
+				; Reg Changed:	
+				; +------------------------------------------------------------+
+ 0000008A  55				push	ebp
+ 0000008B  8B EC			mov	ebp, esp
+				COMMENT !
+				Psuedocode:
+
+
+
+				!	
+
+
+				; Clean up stack and return
+ 0000008D  5D				pop		ebp
+ 0000008E  C3				ret
+
+				; +------------------------------------------------------------+
+ 0000008F			WriteVal ENDP
+				; +============================================================+
+
+
+
+				; +============================================================+
+ 0000008F			getUserData PROC
+				; Description:	
+				;	        
+				; Receives:		
+				; Returns:		
+				; Pre:			
+				; Reg Changed:	
+				; +------------------------------------------------------------+
+ 0000008F  55				push	ebp
+ 00000090  8B EC			mov	ebp, esp
+
+				COMMENT !
+				Psuedocode:
+
+
+
+				!	
+
+
+				; Clean up stack and return
+ 00000092  5D				pop		ebp
+ 00000093  C3				ret
+
+				; +------------------------------------------------------------+
+ 00000094			getUserData ENDP
+				; +============================================================+
+
+
+
+				; +============================================================+
+ 00000094			displaySummary PROC
+				; Description:	
+				;	        
+				; Receives:		
+				; Returns:		
+				; Pre:			
+				; Reg Changed:	
+				; +------------------------------------------------------------+
+ 00000094  55				push	ebp
+ 00000095  8B EC			mov	ebp, esp
+
+				COMMENT !
+				Psuedocode:
+
+
+
+				!	
+
+
+				; Clean up stack and return
+ 00000097  5D				pop		ebp
+ 00000098  C3				ret
+
+				; +------------------------------------------------------------+
+ 00000099			displaySummary ENDP
+				; +============================================================+
+
+
+				; +============================================================+
 				END main
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/03/16 23:24:54
-#Program Template     (template.asm			     Symbols 2 - 1
+				; +============================================================+
 
 
+
+
+
+				; +============================================================+
+				; The below should not compile - template for functions
+
+
+				; +============================================================+
+				someprocess PROC
+				; Description:	
+				;	
+				; Receives:		
+				; Returns:		
+				; Pre:			
+				; Reg Changed:	
+				; +============================================================+
+
+					
+					ret
+				; +------------------------------------------------------------+
+				someprocess ENDP
+				; +------------------------------------------------------------+
+
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 06:59:13
+3Programming Assignment 6    (project05-hillyer.asm	     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+displayString  . . . . . . . . .	Proc
+getString  . . . . . . . . . . .	Proc
 
 
 Structures and Unions:
@@ -140,8 +620,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000000 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000007 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000288 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000099 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -211,6 +691,9 @@ ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadVal  . . . . . . . . . . . .	P Near	 0000004E _TEXT	Length= 0000003C Public STDCALL
+  RETRY  . . . . . . . . . . . .	L Near	 00000051 _TEXT	
+  INPUT_VALID  . . . . . . . . .	L Near	 00000088 _TEXT	
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -247,8 +730,11 @@ WriteStackFrameName  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteVal . . . . . . . . . . . .	P Near	 0000008A _TEXT	Length= 00000005 Public STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000007 Public STDCALL
+displaySummary . . . . . . . . .	P Near	 00000094 _TEXT	Length= 00000005 Public STDCALL
+getUserData  . . . . . . . . . .	P Near	 0000008F _TEXT	Length= 00000005 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000004E Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -268,11 +754,13 @@ Symbols:
 @fardata . . . . . . . . . . . .	Text   	 FLAT
 @stack . . . . . . . . . . . . .	Text   	 FLAT
 ALT_MASK . . . . . . . . . . . .	Number	 00000003h   
+BUFFER_SIZE  . . . . . . . . . .	Number	 0000000Bh   
 CAPSLOCK_ON  . . . . . . . . . .	Number	 00000080h   
 CREATE_ALWAYS  . . . . . . . . .	Number	 00000002h   
 CREATE_NEW . . . . . . . . . . .	Number	 00000001h   
 CTRL_MASK  . . . . . . . . . . .	Number	 0000000Ch   
 CreateFile . . . . . . . . . . .	Text   	 CreateFileA
+DATA_ARRAY_SIZE  . . . . . . . .	Number	 0000000Ah   
 DO_NOT_SHARE . . . . . . . . . .	Number	 00000000h   
 ENABLE_ECHO_INPUT  . . . . . . .	Number	 00000004h   
 ENABLE_LINE_INPUT  . . . . . . .	Number	 00000002h   
@@ -340,6 +828,8 @@ KEY_EVENT  . . . . . . . . . . .	Number	 00000001h
 KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh   
 LEFT_ALT_PRESSED . . . . . . . .	Number	 00000002h   
 LEFT_CTRL_PRESSED  . . . . . . .	Number	 00000008h   
+MAX_DIGITS . . . . . . . . . . .	Number	 0000000Ah   
+MAX_UNSIGNED_INT . . . . . . . .	Number	 FFFFFFFFh   
 MB_ABORTRETRYIGNORE  . . . . . .	Number	 00000002h   
 MB_APPLMODAL . . . . . . . . . .	Number	 00000000h   
 MB_CANCELTRYCONTINUE . . . . . .	Number	 00000006h   
@@ -467,13 +957,18 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+avgMsg . . . . . . . . . . . . .	Byte	 0000020E _DATA	
+badInputMsg  . . . . . . . . . .	Byte	 0000016F _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
+goodbye1 . . . . . . . . . . . .	Byte	 0000021F _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
+instructions_1 . . . . . . . . .	Byte	 00000059 _DATA	
+intro  . . . . . . . . . . . . .	Byte	 00000000 _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -481,7 +976,13 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
+numbersMsg . . . . . . . . . . .	Byte	 000001CC _DATA	
+rawStringIn  . . . . . . . . . .	Byte	 0000027D _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
+singleData . . . . . . . . . . .	DWord	 00000279 _DATA	
+sumMsg . . . . . . . . . . . . .	Byte	 000001F0 _DATA	
+userData . . . . . . . . . . . .	DWord	 00000251 _DATA	
+valuePrompt  . . . . . . . . . .	Byte	 0000014C _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
