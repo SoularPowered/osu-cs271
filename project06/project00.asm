@@ -126,6 +126,8 @@ MAX_DIGITS = 10                 ; maximum digits that a user can enter and still
 DATA_ARRAY_SIZE = 10
 BUFFER_SIZE = DATA_ARRAY_SIZE + 30
 MAX_BUFFER_SIZE = DATA_ARRAY_SIZE + 1
+ASCII_ZERO = 48
+ASCII_NINE = 57
 
 ; *********************
 ; Variables           *
@@ -261,12 +263,15 @@ ReadVal PROC
 ; Get string from user, setup ESI to point to buffer for lodsb and ensure we're moving forward
 	getString	pValuePrompt, buffer
 	mov			esi, buffer
-	mov			ebx, 0			; make sure all of eax is 0'd out before using lodsb
+	mov			ebx, 0			; use ebx as accumulator because lodsb will overwrite eax
 
 ; Convert digit string to numeric while validating user's input	
 TEST_VALUES:
-	lodsb	; load value pointed at by esi into al register
-
+	lodsb	; load next character from buffer into al
+	cmp		al, ASCII_ZERO
+	jb		BAD_INPUT
+	cmp		al, ASCII_NINE
+	ja		BAD_INPUT
 
 ; move the value into eax and compare to max int possible
 	; DEBUG PURPOSES:
