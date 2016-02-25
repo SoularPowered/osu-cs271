@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 17:23:50
 3Programming Assignment 6    (project05-hillyer.asm	     Page 1 - 1
 
 
@@ -84,7 +84,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 				; Receives:		
 				; +------------------------------------------------------------+
 				getString MACRO promptAddr:REQ, outStringAddr:REQ
-				; Save used registers
+				;; Save used registers
 					push	edx
 					push	ecx
 
@@ -96,14 +96,13 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 					mov		ecx, BUFFER_SIZE 
 					call	ReadString
 
-				; Restore registers
+				;; Restore registers
 					pop		ecx
 					pop		edx
 
-				; +------------------------------------------------------------+	
+				;; +------------------------------------------------------------+	
 				ENDM
 				; +============================================================+
-
 
 
 				; +============================================================+
@@ -119,15 +118,26 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 					mov		edx, stringAddr
 					call	WriteString
 
-
 				;; Restore registers
 					pop		edx
 
-				; +------------------------------------------------------------+
+				;; +------------------------------------------------------------+
 				ENDM
 				; +============================================================+
 
 
+				; Set up the stack frame pointer
+				mSetStackFrame MACRO
+					push	ebp
+					mov		ebp, esp
+				ENDM
+
+				; Restores a stack before returning with optional arguments to restore with ret call
+				mCleanStackFrame MACRO numArgs
+					mov		esp, ebp ; remove any locals from stack
+					pop		ebp
+					ret		numArgs
+				ENDM
 
 				; *********************
 				; Constants           *
@@ -274,7 +284,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 	   20 00
  00000237 00000226 R			pAvgMsg			DWORD	OFFSET avgMsg
 
- 0000023B 47 65 74 74 69		goodbye1		BYTE	"Getting down low with the in and the out was fun!",0
+ 0000023B 47 65 74 74 69		goodbye		BYTE	"Getting down low with the in and the out was fun!",0
 	   6E 67 20 64 6F
 	   77 6E 20 6C 6F
 	   77 20 77 69 74
@@ -284,7 +294,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 	   65 20 6F 75 74
 	   20 77 61 73 20
 	   66 75 6E 21 00
- 0000026D 0000023B R			pGoodbye1		DWORD	OFFSET goodbye1
+ 0000026D 0000023B R			pGoodbye		DWORD	OFFSET goodbye
 
 				; Data Variables
  00000271  0000000A [			userData		DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
@@ -315,7 +325,6 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 				; Reg Changed:	Potentially all - main entrypoint
 				; +------------------------------------------------------------+
 
-
 				; Display the program title and programmer's name & Get the user's name, and greet the user.
 					displayString 	pIntro
  00000000  52		     1		push	edx
@@ -335,7 +344,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
  00000029  E8 00000000 E		call			CrLF
 
 				; Prompt user for the 10 values and store them in an array
- 0000002E  E8 000000B1			call	getUserData
+ 0000002E  E8 000000DB			call	getUserData
  00000033  E8 00000000 E		call	CrLF
 
 				; Calculate the sum and average of the array
@@ -347,46 +356,47 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
  00000039  8B 15 00000200 R  1		mov		edx, pNumbersMsg
  0000003F  E8 00000000 E     1		call	WriteString
  00000044  5A		     1		pop		edx
-				;	call	printArray
  00000045  E8 00000000 E		call	CrLf
+				;	call	printArray
+ 0000004A  E8 00000000 E		call	CrLf
 
 				; Print the sum
 					displayString pSumMsg
- 0000004A  52		     1		push	edx
- 0000004B  8B 15 00000222 R  1		mov		edx, pSumMsg
- 00000051  E8 00000000 E     1		call	WriteString
- 00000056  5A		     1		pop		edx
+ 0000004F  52		     1		push	edx
+ 00000050  8B 15 00000222 R  1		mov		edx, pSumMsg
+ 00000056  E8 00000000 E     1		call	WriteString
+ 0000005B  5A		     1		pop		edx
 				;	push dataSum
- 00000057  E8 00000083			call	WriteVal
- 0000005C  E8 00000000 E		call	CrLf
+ 0000005C  E8 000000A6	call	WriteVal
+ 00000061  E8 00000000 E		call	CrLf
 
 				; Print the average
 					displayString pAvgMsg
- 00000061  52		     1		push	edx
- 00000062  8B 15 00000237 R  1		mov		edx, pAvgMsg
- 00000068  E8 00000000 E     1		call	WriteString
- 0000006D  5A		     1		pop		edx
+ 00000066  52		     1		push	edx
+ 00000067  8B 15 00000237 R  1		mov		edx, pAvgMsg
+ 0000006D  E8 00000000 E     1		call	WriteString
+ 00000072  5A		     1		pop		edx
 				;	push	dataAvg
- 0000006E  E8 0000006C			call	WriteVal
- 00000073  E8 00000000 E		call	CrLf
+ 00000073  E8 0000008F			call	WriteVal
+ 00000078  E8 00000000 E		call	CrLf
 
 				; Print FareWell message
- 00000078  E8 00000000 E		call	CrLf
-					displayString 	pGoodbye1
- 0000007D  52		     1		push	edx
- 0000007E  8B 15 0000026D R  1		mov		edx, pGoodbye1
- 00000084  E8 00000000 E     1		call	WriteString
- 00000089  5A		     1		pop		edx
- 0000008A  E8 00000000 E		call	CrLF
+ 0000007D  E8 00000000 E		call	CrLf
+					displayString 	pGoodbye
+ 00000082  52		     1		push	edx
+ 00000083  8B 15 0000026D R  1		mov		edx, pGoodbye
+ 00000089  E8 00000000 E     1		call	WriteString
+ 0000008E  5A		     1		pop		edx
  0000008F  E8 00000000 E		call	CrLF
+ 00000094  E8 00000000 E		call	CrLF
 
 				; exit to operating system
 					exit	
- 00000094  6A 00	   *	    push   +000000000h
- 00000096  E8 00000000 E   *	    call   ExitProcess
+ 00000099  6A 00	   *	    push   +000000000h
+ 0000009B  E8 00000000 E   *	    call   ExitProcess
 
 				; +------------------------------------------------------------+
- 0000009B			main ENDP
+ 000000A0			main ENDP
 				; +============================================================+
 
 
@@ -395,7 +405,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 
 
 				; +============================================================+
- 0000009B			ReadVal PROC
+ 000000A0			ReadVal PROC
 				; Description:	Gets string of digits from user, then convert to
 				;               numeric and validate input.
 				; Receives:		@buffer (reference), @result (reference)
@@ -406,63 +416,79 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
  = [ebp + 8]				buffer		EQU [ebp + 8]
  = PTR DWORD [ebp + 12]			result		EQU PTR DWORD [ebp + 12]
 
- 0000009B  55				push	ebp
- 0000009C  8B EC			mov		ebp, esp
+					mSetStackFrame
+ 000000A0  55		     1		push	ebp
+ 000000A1  8B EC	     1		mov		ebp, esp
+ 000000A3  53				push	ebx
+ 000000A4  56				push	esi
 
-					; mov		edx, buffer ; @ put address of buffer in edi
-				; Invoke the getString macro to get the user's string of digits into the buffer
-					; mov		edi, edx
+				; Get string from user, setup ESI to point to buffer for lodsb and ensure we're moving forward
 					getString	pValuePrompt, buffer
- 0000009E  52		     1		push	edx
- 0000009F  51		     1		push	ecx
- 000000A0  52		     2		push	edx
- 000000A1  8B 15 00000177 R  2		mov		edx, pValuePrompt
- 000000A7  E8 00000000 E     2		call	WriteString
- 000000AC  5A		     2		pop		edx
- 000000AD  8B 55 08	     1		mov		edx, buffer
- 000000B0  B9 00000028	     1		mov		ecx, BUFFER_SIZE 
- 000000B5  E8 00000000 E     1		call	ReadString
- 000000BA  59		     1		pop		ecx
- 000000BB  5A		     1		pop		edx
-					displayString	buffer  ; Echo the raw string back for DEBUG
- 000000BC  52		     1		push	edx
- 000000BD  8B 55 08	     1		mov		edx, buffer
- 000000C0  E8 00000000 E     1		call	WriteString
- 000000C5  5A		     1		pop		edx
+ 000000A5  52		     1		push	edx
+ 000000A6  51		     1		push	ecx
+ 000000A7  52		     2		push	edx
+ 000000A8  8B 15 00000177 R  2		mov		edx, pValuePrompt
+ 000000AE  E8 00000000 E     2		call	WriteString
+ 000000B3  5A		     2		pop		edx
+ 000000B4  8B 55 08	     1		mov		edx, buffer
+ 000000B7  B9 00000028	     1		mov		ecx, BUFFER_SIZE 
+ 000000BC  E8 00000000 E     1		call	ReadString
+ 000000C1  59		     1		pop		ecx
+ 000000C2  5A		     1		pop		edx
+ 000000C3  8B 75 08			mov			esi, buffer
+ 000000C6  BB 00000000			mov			ebx, 0			; make sure all of eax is 0'd out before using lodsb
 
- 000000C6			RETRY:
 				; Convert digit string to numeric while validating user's input	
+ 000000CB			TEST_VALUES:
+ 000000CB  AC				lodsb	; load value pointed at by esi into al register
+
 
 				; move the value into eax and compare to max int possible
 					; DEBUG PURPOSES:
- 000000C6  B8 00000064			mov		eax, 100
+ 000000CC  B8 0000000A			mov		eax, 10
 
 				; if good, jump to valid block
- 000000CB  BB FFFFFFFF			mov		ebx, MAX_UNSIGNED_INT
- 000000D0  3B C3			cmp		eax, ebx
- 000000D2  72 07			jb		GOOD_INPUT
-				; if bad
-				;	getString	badInputMsg, rawStringIn
- 000000D4  E8 00000000 E		call		CrLF
- 000000D9  EB EB			jmp			RETRY
+ 000000D1  BB FFFFFFFF			mov		ebx, MAX_UNSIGNED_INT
+ 000000D6  3B C3			cmp		eax, ebx
+ 000000D8  72 25			jb		GOOD_INPUT
 
- 000000DB			GOOD_INPUT:
+				; if bad, reprompt:
+ 000000DA			BAD_INPUT:
+					getString	pBadInputMsg, buffer
+ 000000DA  52		     1		push	edx
+ 000000DB  51		     1		push	ecx
+ 000000DC  52		     2		push	edx
+ 000000DD  8B 15 000001D8 R  2		mov		edx, pBadInputMsg
+ 000000E3  E8 00000000 E     2		call	WriteString
+ 000000E8  5A		     2		pop		edx
+ 000000E9  8B 55 08	     1		mov		edx, buffer
+ 000000EC  B9 00000028	     1		mov		ecx, BUFFER_SIZE 
+ 000000F1  E8 00000000 E     1		call	ReadString
+ 000000F6  59		     1		pop		ecx
+ 000000F7  5A		     1		pop		edx
+ 000000F8  E8 00000000 E		call		CrLF
+ 000000FD  EB CC			jmp			TEST_VALUES
+
+ 000000FF			GOOD_INPUT:
 
 				; return value by reference
-				;	mov		edi, result
-				;	mov		[edi], eax
+
 
 				; Clean up stack and return
- 000000DB  5D				pop		ebp
- 000000DC  C2 0008			ret		8
+ 000000FF  5E				pop		esi
+ 00000100  5B				pop		ebx
+					mCleanStackFrame 8
+ 00000101  8B E5	     1		mov		esp, ebp 
+ 00000103  5D		     1		pop		ebp
+ 00000104  C2 0008	     1		ret		8
 
 				; +------------------------------------------------------------+
- 000000DF			ReadVal ENDP
+ 00000107			ReadVal ENDP
 				; +============================================================+
 
 
 				; +============================================================+
- 000000DF			WriteVal PROC
+ 00000107			WriteVal PROC
 				; Description:	Convert numeric value to a string of digits and
 				;	        invoke the displayString macro to produce output
 				; Receives:		
@@ -470,22 +496,25 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 				; Pre:			
 				; Reg Changed:	
 				; +------------------------------------------------------------+
- 000000DF  55				push	ebp
- 000000E0  8B EC			mov	ebp, esp
+					mSetStackFrame
+ 00000107  55		     1		push	ebp
+ 00000108  8B EC	     1		mov		ebp, esp
 
 
 				; Clean up stack and return
- 000000E2  5D				pop		ebp
- 000000E3  C3				ret
+					mCleanStackFrame
+ 0000010A  8B E5	     1		mov		esp, ebp 
+ 0000010C  5D		     1		pop		ebp
+ 0000010D  C3		     1		ret		
 
 				; +------------------------------------------------------------+
- 000000E4			WriteVal ENDP
+ 0000010E			WriteVal ENDP
 				; +============================================================+
 
 
 
 				; +============================================================+
- 000000E4			getUserData PROC
+ 0000010E			getUserData PROC
 				; Description:	
 				;	        
 				; Receives:		
@@ -493,21 +522,24 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 				; Pre:			
 				; Reg Changed:	
 				; +------------------------------------------------------------+
- 000000E4  55				push	ebp
- 000000E5  8B EC			mov		ebp, esp
+					
+					mSetStackFrame
+ 0000010E  55		     1		push	ebp
+ 0000010F  8B EC	     1		mov		ebp, esp
 
-				; 
- 000000E7  8B 3D 000002C9 R		mov		edi, pRawStringIn
- 000000ED  FF 35 0000029D R		push	singleInt
- 000000F3  57				push	edi ; TODO: Pass this parameter in to this function
- 000000F4  E8 FFFFFFA2			call	ReadVal
+ 00000111  8B 3D 000002C9 R		mov		edi, pRawStringIn
+ 00000117  FF 35 0000029D R		push	singleInt
+ 0000011D  57				push	edi ; TODO: Pass this parameter in to this function
+ 0000011E  E8 FFFFFF7D			call	ReadVal
 
 				; Clean up stack and return
- 000000F9  5D				pop		ebp
- 000000FA  C3				ret		
+					mCleanStackFrame
+ 00000123  8B E5	     1		mov		esp, ebp 
+ 00000125  5D		     1		pop		ebp
+ 00000126  C3		     1		ret		
 
 				; +------------------------------------------------------------+
- 000000FB			getUserData ENDP
+ 00000127			getUserData ENDP
 				; +============================================================+
 
 
@@ -543,7 +575,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
 				someprocess ENDP
 				; +------------------------------------------------------------+
 
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 15:57:17
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 17:23:50
 3Programming Assignment 6    (project05-hillyer.asm	     Symbols 2 - 1
 
 
@@ -555,6 +587,8 @@ Macros:
 
 displayString  . . . . . . . . .	Proc
 getString  . . . . . . . . . . .	Proc
+mCleanStackFrame . . . . . . . .	Proc
+mSetStackFrame . . . . . . . . .	Proc
 
 
 Structures and Unions:
@@ -646,7 +680,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 000002D5 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000000FB Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000127 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -716,9 +750,10 @@ ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-ReadVal  . . . . . . . . . . . .	P Near	 0000009B _TEXT	Length= 00000044 Public STDCALL
-  RETRY  . . . . . . . . . . . .	L Near	 000000C6 _TEXT	
-  GOOD_INPUT . . . . . . . . . .	L Near	 000000DB _TEXT	
+ReadVal  . . . . . . . . . . . .	P Near	 000000A0 _TEXT	Length= 00000067 Public STDCALL
+  TEST_VALUES  . . . . . . . . .	L Near	 000000CB _TEXT	
+  BAD_INPUT  . . . . . . . . . .	L Near	 000000DA _TEXT	
+  GOOD_INPUT . . . . . . . . . .	L Near	 000000FF _TEXT	
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -755,10 +790,10 @@ WriteStackFrameName  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-WriteVal . . . . . . . . . . . .	P Near	 000000DF _TEXT	Length= 00000005 Public STDCALL
+WriteVal . . . . . . . . . . . .	P Near	 00000107 _TEXT	Length= 00000007 Public STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-getUserData  . . . . . . . . . .	P Near	 000000E4 _TEXT	Length= 00000017 Public STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000009B Public STDCALL
+getUserData  . . . . . . . . . .	P Near	 0000010E _TEXT	Length= 00000019 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000A0 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -992,7 +1027,7 @@ cyan . . . . . . . . . . . . . .	Number	 00000003h
 dataAvg  . . . . . . . . . . . .	DWord	 000002D1 _DATA	
 dataSum  . . . . . . . . . . . .	DWord	 000002CD _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
-goodbye1 . . . . . . . . . . . .	Byte	 0000023B _DATA	
+goodbye  . . . . . . . . . . . .	Byte	 0000023B _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
 instructions . . . . . . . . . .	Byte	 0000005D _DATA	
@@ -1007,7 +1042,7 @@ magenta  . . . . . . . . . . . .	Number	 00000005h
 numbersMsg . . . . . . . . . . .	Byte	 000001DC _DATA	
 pAvgMsg  . . . . . . . . . . . .	DWord	 00000237 _DATA	
 pBadInputMsg . . . . . . . . . .	DWord	 000001D8 _DATA	
-pGoodbye1  . . . . . . . . . . .	DWord	 0000026D _DATA	
+pGoodbye . . . . . . . . . . . .	DWord	 0000026D _DATA	
 pInstructions  . . . . . . . . .	DWord	 00000150 _DATA	
 pIntro . . . . . . . . . . . . .	DWord	 00000059 _DATA	
 pNumbersMsg  . . . . . . . . . .	DWord	 00000200 _DATA	

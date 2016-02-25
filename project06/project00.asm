@@ -63,7 +63,7 @@ INCLUDE Irvine32.inc
 ; Receives:		
 ; +------------------------------------------------------------+
 getString MACRO promptAddr:REQ, outStringAddr:REQ
-; Save used registers
+;; Save used registers
 	push	edx
 	push	ecx
 
@@ -75,14 +75,13 @@ getString MACRO promptAddr:REQ, outStringAddr:REQ
 	mov		ecx, BUFFER_SIZE 
 	call	ReadString
 
-; Restore registers
+;; Restore registers
 	pop		ecx
 	pop		edx
 
-; +------------------------------------------------------------+	
+;; +------------------------------------------------------------+	
 ENDM
 ; +============================================================+
-
 
 
 ; +============================================================+
@@ -98,15 +97,26 @@ displayString MACRO stringAddr:REQ
 	mov		edx, stringAddr
 	call	WriteString
 
-
 ;; Restore registers
 	pop		edx
 
-; +------------------------------------------------------------+
+;; +------------------------------------------------------------+
 ENDM
 ; +============================================================+
 
 
+; Set up the stack frame pointer
+mSetStackFrame MACRO
+	push	ebp
+	mov		ebp, esp
+ENDM
+
+; Restores a stack before returning with optional arguments to restore with ret call
+mCleanStackFrame MACRO numArgs
+	mov		esp, ebp ;; remove any locals from stack
+	pop		ebp
+	ret		numArgs
+ENDM
 
 ; *********************
 ; Constants           *
@@ -151,8 +161,8 @@ MAX_BUFFER_SIZE = DATA_ARRAY_SIZE + 1
 	avgMsg			BYTE	"The average is: ",0
 	pAvgMsg			DWORD	OFFSET avgMsg
 
-	goodbye1		BYTE	"Getting down low with the in and the out was fun!",0
-	pGoodbye1		DWORD	OFFSET goodbye1
+	goodbye		BYTE	"Getting down low with the in and the out was fun!",0
+	pGoodbye		DWORD	OFFSET goodbye
 
 ; Data Variables
 	userData		DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
@@ -178,7 +188,6 @@ main PROC
 ; Pre:			None
 ; Reg Changed:	Potentially all - main entrypoint
 ; +------------------------------------------------------------+
-
 
 ; Display the program title and programmer's name & Get the user's name, and greet the user.
 	displayString 	pIntro
@@ -217,7 +226,7 @@ main PROC
 
 ; Print FareWell message
 	call	CrLf
-	displayString 	pGoodbye1
+	displayString 	pGoodbye
 	call	CrLF
 	call	CrLF
 
@@ -245,40 +254,44 @@ ReadVal PROC
 	buffer		EQU [ebp + 8]
 	result		EQU PTR DWORD [ebp + 12]
 
-	push	ebp
-	mov		ebp, esp
+	mSetStackFrame
+	push	ebx
+	push	esi
 
-	; mov		edx, buffer ; @ put address of buffer in edi
-; Invoke the getString macro to get the user's string of digits into the buffer
-	; mov		edi, edx
+; Get string from user, setup ESI to point to buffer for lodsb and ensure we're moving forward
 	getString	pValuePrompt, buffer
-	displayString	buffer  ; Echo the raw string back for DEBUG
+	mov			esi, buffer
+	mov			ebx, 0			; make sure all of eax is 0'd out before using lodsb
 
-RETRY:
 ; Convert digit string to numeric while validating user's input	
+TEST_VALUES:
+	lodsb	; load value pointed at by esi into al register
+
 
 ; move the value into eax and compare to max int possible
 	; DEBUG PURPOSES:
-	mov		eax, 100
+	mov		eax, 10
 
 ; if good, jump to valid block
 	mov		ebx, MAX_UNSIGNED_INT
 	cmp		eax, ebx
 	jb		GOOD_INPUT
-; if bad
-;	getString	badInputMsg, rawStringIn
+
+; if bad, reprompt:
+BAD_INPUT:
+	getString	pBadInputMsg, buffer
 	call		CrLF
-	jmp			RETRY
+	jmp			TEST_VALUES
 
 GOOD_INPUT:
 
 ; return value by reference
-;	mov		edi, result
-;	mov		[edi], eax
+
 
 ; Clean up stack and return
-	pop		ebp
-	ret		8
+	pop		esi
+	pop		ebx
+	mCleanStackFrame 8
 
 ; +------------------------------------------------------------+
 ReadVal ENDP
@@ -294,13 +307,11 @@ WriteVal PROC
 ; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
-	push	ebp
-	mov	ebp, esp
+	mSetStackFrame
 
 
 ; Clean up stack and return
-	pop		ebp
-	ret
+	mCleanStackFrame
 
 ; +------------------------------------------------------------+
 WriteVal ENDP
@@ -317,18 +328,16 @@ getUserData PROC
 ; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
-	push	ebp
-	mov		ebp, esp
+	
+	mSetStackFrame
 
-; 
 	mov		edi, pRawStringIn
 	push	singleInt
 	push	edi ; TODO: Pass this parameter in to this function
 	call	ReadVal
 
 ; Clean up stack and return
-	pop		ebp
-	ret		
+	mCleanStackFrame
 
 ; +------------------------------------------------------------+
 getUserData ENDP
