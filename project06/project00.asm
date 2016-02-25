@@ -204,6 +204,7 @@ main PROC
 	call			CrLF
 
 ; Prompt user for the 10 values and store them in an array
+	push	pRawStringIn
 	mov		eax, DATA_ARRAY_SIZE
 	push	eax			; arrSize
 	push	pUserData	; pArr
@@ -359,17 +360,20 @@ WriteVal ENDP
 getUserData PROC
 ; Description:	
 ;	        
-; Receives:		
+; Receives:		pNumArr: address of array to store values in
+;               arrSize: size of the array to store values in
+;               pStrArr: address of array to store/process keyboard input
 ; Returns:		
 ; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
-	pArr		EQU [ebp + 8]   ; pointer to array to fill with data
+	pNumArr		EQU [ebp + 8]   ; pointer to array to fill with data
 	arrSize		EQU [ebp + 12]  ; size of array
+	pStrArr		EQU	[ebp + 16]  ; the string used to store the user's input
 
 	mSetStackFrame
 ; 
-	mov		edi, pArr
+	mov		edi, pStrArr
 	push	offset singleInt
 	push	edi		; TODO: Pass this parameter in to this function
 	call	ReadVal
@@ -379,7 +383,7 @@ getUserData PROC
 	
 
 ; Clean up stack and return
-	mCleanStackFrame 8
+	mCleanStackFrame 12
 
 ; +------------------------------------------------------------+
 getUserData ENDP
