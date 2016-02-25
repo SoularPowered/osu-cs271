@@ -112,11 +112,12 @@ mSetStackFrame MACRO
 ENDM
 
 ; Restores a stack before returning with optional arguments to restore with ret call
-mCleanStackFrame MACRO numArgs
+mCleanStackFrame MACRO argBytes
 	mov		esp, ebp ;; remove any locals from stack
 	pop		ebp
-	ret		numArgs
+	ret		argBytes
 ENDM
+
 
 ; *********************
 ; Constants           *
@@ -128,6 +129,7 @@ BUFFER_SIZE = DATA_ARRAY_SIZE + 30
 MAX_BUFFER_SIZE = DATA_ARRAY_SIZE + 1
 ASCII_ZERO = 48
 ASCII_NINE = 57
+
 
 ; *********************
 ; Variables           *
@@ -202,6 +204,9 @@ main PROC
 	call			CrLF
 
 ; Prompt user for the 10 values and store them in an array
+	mov		eax, DATA_ARRAY_SIZE
+	push	eax			; arrSize
+	push	pUserData	; pArr
 	call	getUserData
 	call	CrLF
 
@@ -248,28 +253,31 @@ main ENDP
 ReadVal PROC
 ; Description:	Gets string of digits from user, then convert to
 ;               numeric and validate input.
-; Receives:		@buffer (reference), @result (reference)
+; Receives:		@pStrBuffer (reference), @result (reference)
 ; Returns:		
 ; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
-	buffer		EQU [ebp + 8]
+	pStrBuffer		EQU [ebp + 8]
 	result		EQU [ebp + 12]
 
 	mSetStackFrame
 	push	ebx
 	push	esi
 
-; Get string from user, setup ESI to point to buffer for lodsb and ensure we're moving forward
-	getString	pValuePrompt, buffer
+; Get string from user, setup ESI to point to pStrBuffer for lodsb and ensure we're moving forward
+	getString	pValuePrompt, pStrBuffer
 FRESH_STRING:
 	mov			ebx, 0			; use ebx as accumulator because lodsb will overwrite eax
-	mov			esi, buffer
+	mov			esi, pStrBuffer
 ; Convert digit string to numeric while validating user's input	
 
 CONVERT_STRING:
-	lodsb	 ; load next character from buffer into al
-	inc esi  ; move index forward for next pass
+;DEBUG:
+;	mov		edx, esi
+;	call	writestring
+;end debug
+	lodsb	 ; load next character from pStrBuffer into al
  
 ;f if character is 0, the null terminator for the string, then end of string - continue
 	cmp		al, 0
@@ -289,7 +297,12 @@ CONVERT_STRING:
 	mov		edx, 0
 	mov		edi, 10
 	mul		edi			
+; If overflow, the uer's integer is too large to fit
+	cmp		edx, 0
+	JNZ		BAD_INPUT
 	add		eax, ecx	
+; Check overflow again - addition might theoretically overflow too
+	jc		BAD_INPUT
 	mov		ebx, eax		; ebx now as the integer as calculated so far
 	jmp		CONVERT_STRING
 
@@ -301,7 +314,7 @@ END_OF_STRING:
 
 ; if bad, reprompt:
 BAD_INPUT:
-	getString	pBadInputMsg, buffer
+	getString	pBadInputMsg, pStrBuffer
 	call		CrLF
 	jmp			FRESH_STRING
 
@@ -351,10 +364,12 @@ getUserData PROC
 ; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
-	
-	mSetStackFrame
+	pArr		EQU [ebp + 8]   ; pointer to array to fill with data
+	arrSize		EQU [ebp + 12]  ; size of array
 
-	mov		edi, pRawStringIn
+	mSetStackFrame
+; 
+	mov		edi, pArr
 	push	offset singleInt
 	push	edi		; TODO: Pass this parameter in to this function
 	call	ReadVal
@@ -364,7 +379,7 @@ getUserData PROC
 	
 
 ; Clean up stack and return
-	mCleanStackFrame
+	mCleanStackFrame 8
 
 ; +------------------------------------------------------------+
 getUserData ENDP
