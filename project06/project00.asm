@@ -254,7 +254,7 @@ ReadVal PROC
 ; Reg Changed:	
 ; +------------------------------------------------------------+
 	buffer		EQU [ebp + 8]
-	result		EQU PTR DWORD [ebp + 12]
+	result		EQU [ebp + 12]
 
 	mSetStackFrame
 	push	ebx
@@ -262,36 +262,54 @@ ReadVal PROC
 
 ; Get string from user, setup ESI to point to buffer for lodsb and ensure we're moving forward
 	getString	pValuePrompt, buffer
-	mov			esi, buffer
+FRESH_STRING:
 	mov			ebx, 0			; use ebx as accumulator because lodsb will overwrite eax
-
+	mov			esi, buffer
 ; Convert digit string to numeric while validating user's input	
-TEST_VALUES:
-	lodsb	; load next character from buffer into al
+
+CONVERT_STRING:
+	lodsb	 ; load next character from buffer into al
+	inc esi  ; move index forward for next pass
+ 
+;f if character is 0, the null terminator for the string, then end of string - continue
+	cmp		al, 0
+	jz		END_OF_STRING
+
+; else if character's ascii value is not between ascii 0 and ascii 9, reprompt for string	
 	cmp		al, ASCII_ZERO
 	jb		BAD_INPUT
 	cmp		al, ASCII_NINE
 	ja		BAD_INPUT
 
-; move the value into eax and compare to max int possible
-	; DEBUG PURPOSES:
-	mov		eax, 10
+; else do the conversion using algorithm and repeat loop
+	sub		al, 48		; convert from ascii to numeric reprsentation
+	movzx	ecx, al		; save char in safe spot and make it a DWORD at same time
+; ebx = ebx * 10 + (digit) 
+	mov		eax, ebx	; eax = 'x'
+	mov		edx, 0
+	mov		edi, 10
+	mul		edi			
+	add		eax, ecx	
+	mov		ebx, eax		; ebx now as the integer as calculated so far
+	jmp		CONVERT_STRING
 
-; if good, jump to valid block
-	mov		ebx, MAX_UNSIGNED_INT
-	cmp		eax, ebx
-	jb		GOOD_INPUT
+END_OF_STRING:
+; finally compare it to the max int value and 
+	mov		eax, MAX_UNSIGNED_INT
+	cmp		ebx, eax
+	jno		GOOD_INPUT
 
 ; if bad, reprompt:
 BAD_INPUT:
 	getString	pBadInputMsg, buffer
 	call		CrLF
-	jmp			TEST_VALUES
+	jmp			FRESH_STRING
 
 GOOD_INPUT:
 
 ; return value by reference
-
+	mov		edi, result
+	mov		[edi], ebx  ; store the result in EBX to the location pointed at by eax, which is result
 
 ; Clean up stack and return
 	pop		esi
@@ -337,9 +355,13 @@ getUserData PROC
 	mSetStackFrame
 
 	mov		edi, pRawStringIn
-	push	singleInt
-	push	edi ; TODO: Pass this parameter in to this function
+	push	offset singleInt
+	push	edi		; TODO: Pass this parameter in to this function
 	call	ReadVal
+; DEBUG:
+	mov		eax, singleInt
+	call	writedec
+	
 
 ; Clean up stack and return
 	mCleanStackFrame
