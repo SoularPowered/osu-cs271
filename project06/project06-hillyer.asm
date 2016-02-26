@@ -13,10 +13,10 @@ TITLE Programming Assignment 6    (project06-hillyer.asm)
 ;   to get input from the user, and WriteString to display output. [ DONE ]
 ;   - getString should display a prompt, then get the user’s keyboard input into a 
 ;     memory location [DONE]
-;   - displayString should display the string stored in a specified memory location.
-;   - readVal should invoke the getString macro to get the user’s string of digits. 
+;   - displayString should display the string stored in a specified memory location. [DONE]
+;   - readVal should invoke the getString macro to get the user’s string of digits.  [DONE]
 ;     It should then convert the digit string to numeric, while validating the user’s 
-;     input.
+;     input. [DONE]
 ;   - writeVal should convert a numeric value to a string of digits, and invoke the 
 ;     displayString macro to produce the output.
 ; + Write a small test program that gets 10 valid integers from the user and stores 
@@ -35,9 +35,7 @@ TITLE Programming Assignment 6    (project06-hillyer.asm)
 ;  4) Addresses of prompts, identifying strings, and other memory locations should be 
 ;     passed by address to the macros.
 ;  5) Used registers must be saved and restored by the called procedures and macros.
-;  6) The stack must be “cleaned up” by the called procedure.
-;  7) The usual requirements regarding documentation, readability, user-friendliness, etc., apply.
-;  8) Submit your text code file (.asm) to Canvas by the due date.
+;  6) The stack must be “cleaned up” by the called procedure. [DONE]
 ; =====================================================================================
 
 ; =====================================================================================
@@ -57,10 +55,11 @@ INCLUDE Irvine32.inc
 ; *********************
 
 ; +============================================================+
-; getString MACRO promptAddr:REQ, outStringAddr:REQ
+; getString
 ; Description: Displays a prompt then get user's keyboard input 
 ; into a memory location stored as a string into outString	
-; Receives:		
+; Receives:	@promptAddr: address of string to be printed as a prompt
+;           @outStringAddr: Address of the array to store the input string into
 ; +------------------------------------------------------------+
 getString MACRO promptAddr:REQ, outStringAddr:REQ
 ;; Save used registers
@@ -85,24 +84,29 @@ ENDM
 
 
 ; +============================================================+
-; displayString MACRO stringAddr:REQ
+; displayString
 ; Description: Displays the string stored in specified mem location
-; Receives:
+; Receives: @stringAddr: address of string to be printed
 ; +------------------------------------------------------------+
 displayString MACRO stringAddr:REQ
 ;; Save used registers
 	push	edx
-
 ;; Use WriteString to display the string stored in memory address	
 	mov		edx, stringAddr
 	call	WriteString
-
 ;; Restore registers
 	pop		edx
 
 ;; +------------------------------------------------------------+
 ENDM
 ; +============================================================+
+
+callWriteVal MACRO integer
+	mov		eax, integer
+	push	pRawStringOut
+	push	eax
+	call	writeval
+ENDM
 
 
 ; Set up the stack frame pointer
@@ -165,21 +169,22 @@ ASCII_NINE = 57
 	avgMsg			BYTE	"The average is: ",0
 	pAvgMsg			DWORD	OFFSET avgMsg
 
-	goodbye		BYTE	"Getting down low with the in and the out was fun!",0
+	goodbye			BYTE	"Getting down low with the in and the out was fun!",0
 	pGoodbye		DWORD	OFFSET goodbye
 
 ; Data Variables
 	userData		DWORD	DATA_ARRAY_SIZE DUP(0)	; Array to store Unsigned Integers
 	userDataSize = ($ - userData)
 	pUserData		DWORD	OFFSET userData
-	
 	singleInt		DWORD	0
 	rawStringIn		BYTE	BUFFER_SIZE DUP(0)
 	pRawStringIn	DWORD	rawStringIn
+	rawStringOut	BYTE	BUFFER_SIZE DUP(0)
+	pRawStringOut	DWORD	rawStringIn
 	dataSum			DWORD	0		; The sum of the userData array
 	dataAvg			DWORD	0		; Average of the data stored in userData array
 	
-
+; +============================================================+
 
 .code
 
@@ -192,6 +197,10 @@ main PROC
 ; Pre:			None
 ; Reg Changed:	Potentially all - main entrypoint
 ; +------------------------------------------------------------+
+
+; DEBUG TEST
+	
+	callWriteVal	5
 
 ; Display the program title and programmer's name & Get the user's name, and greet the user.
 	displayString 	pIntro
@@ -254,18 +263,16 @@ main ENDP
 ; +============================================================+
 
 
-
-
-
-
 ; +============================================================+
 ReadVal PROC
 ; Description:	Gets string of digits from user, then convert to
 ;               numeric and validate input.
-; Receives:		@pStrBuffer (reference), @result (reference)
-; Returns:		
-; Pre:			
-; Reg Changed:	
+; Receives:	    @pStrBuffer: buffer to store the digits into
+;               @result: return by reference the numeric representation
+;                 of the string
+; Returns:		result (by reference)
+; Pre:			None
+; Reg Changed:	None
 ; +------------------------------------------------------------+
 	pStrBuffer	EQU [ebp + 8]
 	result		EQU [ebp + 12]
@@ -301,22 +308,25 @@ CONVERT_STRING:
 ; else do the conversion using algorithm and repeat loop
 	sub		al, 48		; convert from ascii to numeric reprsentation
 	movzx	ecx, al		; save char in safe spot and make it a DWORD at same time
+
 ; ebx = ebx * 10 + (digit) 
 	mov		eax, ebx	; eax = 'x'
 	mov		edx, 0
 	mov		edi, 10
 	mul		edi			
+
 ; If overflow, the uer's integer is too large to fit
 	cmp		edx, 0
 	JNZ		BAD_INPUT
 	add		eax, ecx	
+
 ; Check overflow again - addition might theoretically overflow too
 	jc		BAD_INPUT
 	mov		ebx, eax		; ebx now as the integer as calculated so far
 	jmp		CONVERT_STRING
 
 END_OF_STRING:
-; finally compare it to the max int value and 
+; finally compare it to the max int value 
 	mov		eax, MAX_UNSIGNED_INT
 	cmp		ebx, eax
 	jno		GOOD_INPUT
@@ -351,15 +361,59 @@ ReadVal ENDP
 WriteVal PROC
 ; Description:	Convert numeric value to a string of digits and
 ;	        invoke the displayString macro to produce output
-; Receives:		
-; Returns:		
-; Pre:			
-; Reg Changed:	
+; Algorithm is repeated division by 0, then add 48 to remainder
+; Receives:		intVal - unsigned integer value to print
+;               strArr - array to store the string in
+; Returns:		None
+; Pre:			intVal must be doubleword and unsigned
+; Reg Changed:	0
 ; +------------------------------------------------------------+
-	mSetStackFrame
+	intVal EQU [ebp + 8]
+	strArr EQU [ebp + 12]
 
+	mSetStackFrame
+	push	eax
+	push	ebx
+	push	edx
+	push	edi
+
+
+; setup esi with our storage array and set ebx as a divisor
+	mov		edi, strArr
+	add		edi, MAX_BUFFER_SIZE
+	mov		ebx, 10
+	dec		edi
+	std					; will move backwards through string
+
+; put a null terminator at end of string then move backwards one byte
+	mov		edx, 0	
+	mov		[edi], edx
+	dec		edi
+
+; divide intVal by 10 repeatedly
+	mov		eax, intVal
+
+NEXT_DIGIT:
+	mov		edx, 0
+	div		ebx
+; store remainder into [edi]
+	xchg	eax, edx
+	add		eax, 48		; convert to ascii digit
+	stosb	
+	xchg	eax, edx
+; if eax == 0, no more division, else loop
+	cmp		eax, 0
+	jnz		NEXT_DIGIT
+
+; call displayString - pass in edi+1 which sould point to the last character inserted
+	inc	edi
+	displayString edi
 
 ; Clean up stack and return
+	pop		edi
+	pop		edx
+	pop		ebx
+	pop		eax
 	mCleanStackFrame
 
 ; +------------------------------------------------------------+
@@ -370,14 +424,14 @@ WriteVal ENDP
 
 ; +============================================================+
 getUserData PROC
-; Description:	
-;	        
+; Description:	Iterates to get and store arrSize unisgned integers
+;	              into the array pointed at by pNumArr
 ; Receives:		pNumArr: address of array to store values in
 ;               arrSize: size of the array to store values in
 ;               pStrArr: address of array to store/process keyboard input
-; Returns:		
-; Pre:			
-; Reg Changed:	
+; Returns:		Filled array (by reference / side effect)
+; Pre:			None
+; Reg Changed:	None
 ; +------------------------------------------------------------+
 	pNumArr		EQU [ebp + 8]   ; pointer to array to fill with data
 	arrSize		EQU [ebp + 12]  ; size of array
@@ -385,7 +439,9 @@ getUserData PROC
 
 	mSetStackFrame
 	push	eax
+	push	ecx
 	push	edx
+	push	edi
 	
 ; Set up loop
 	mov		ecx, arrSize
@@ -403,7 +459,9 @@ FILL_ARR:
 	loop	FILL_ARR
 
 ; Clean up stack and return
+	pop		edi
 	pop		edx
+	pop		ecx
 	pop		eax
 	mCleanStackFrame 12
 
@@ -416,14 +474,13 @@ getUserData ENDP
 ; +============================================================+
 sumAvgArray PROC
 ; Description:	Calculates the sum and average of an array
-;	
 ; Receives:		@pNumArr - pointer to an array of unsigned integers
 ;				arrSize - size of the array
 ;               @arrSum - address of DWORD to store sum in
 ;               @arrAvg - address of DWORD to store average
 ; Returns:		the sum of the array (arrSum) and average (arrAg)
 ; Pre:			arrSum and arrAvg argument must = 0 prior to call
-; Reg Changed:	
+; Reg Changed:	None
 ; +============================================================+
 	pNumArr		EQU [ebp + 8]   ; array from which we read data
 	arrSize		EQU [ebp + 12]  ; size of array
@@ -432,8 +489,12 @@ sumAvgArray PROC
 
 ; Setup Stack Frame	
 	mSetStackFrame
-	push	esi
-	push	ecx	
+	push	eax
+	push	ebx
+	push	ecx
+	push	edx
+	push	edi
+	push	esi	
 
 ; Set up loop
 	mov		ecx, arrSize
@@ -456,23 +517,25 @@ SUM_ARR:
 
 ; Clean up stack
 	pop		esi
+	pop		edi
+	pop		edx
 	pop		ecx
+	pop		ebx
+	pop		eax
 	mCleanStackFrame 16
 ; +------------------------------------------------------------+
 sumAvgArray ENDP
 ; +============================================================+
 
+
 ; +============================================================+
 printArray PROC
 ; Description:	Calculates the sum and average of an array
-;	
 ; Receives:		@pNumArr - pointer to an array of unsigned integers
 ;				arrSize - size of the array
-;               @arrSum - address of DWORD to store sum in
-;               @arrAvg - address of DWORD to store average
 ; Returns:		the sum of the array (arrSum) and average (arrAg)
 ; Pre:			arrSum and arrAvg argument must = 0 prior to call
-; Reg Changed:	
+; Reg Changed:	None
 ; +============================================================+
 	pNumArr		EQU [ebp + 8]   ; array from which we read data
 	arrSize		EQU [ebp + 12]  ; size of array
@@ -505,28 +568,3 @@ printArray ENDP
 ; +============================================================+
 END main
 ; +============================================================+
-
-
-
-
-
-; +============================================================+
-; The below should not compile - template for functions
-
-
-; +============================================================+
-someprocess PROC
-; Description:	
-;	
-; Receives:		
-; Returns:		
-; Pre:			
-; Reg Changed:	
-; +============================================================+
-
-	
-	ret
-; +------------------------------------------------------------+
-someprocess ENDP
-; +------------------------------------------------------------+
-
