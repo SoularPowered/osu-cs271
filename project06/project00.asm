@@ -222,7 +222,7 @@ main PROC
 ; Print the values entered
 	displayString pNumbersMsg
 	call	CrLf
-;	call	printArray
+	call	printArray
 	call	CrLf
 
 ; Print the sum
@@ -418,27 +418,72 @@ sumAvgArray PROC
 ;				arrSize - size of the array
 ;               @arrSum - address of DWORD to store sum in
 ;               @arrAvg - address of DWORD to store average
-; Returns:		
-; Pre:			
+; Returns:		the sum of the array (arrSum) and average (arrAg)
+; Pre:			arrSum and arrAvg argument must = 0 prior to call
 ; Reg Changed:	
 ; +============================================================+
-	pNumArr		EQU [ebp + 8]   ; pointer to array to fill with data
+	pNumArr		EQU [ebp + 8]   ; array from which we read data
 	arrSize		EQU [ebp + 12]  ; size of array
 	arrSum		EQU [ebp + 16]  ; sum of values in array
 	arrAvg		EQU [ebp + 20]	; average of values in array
-	
+
+; Setup Stack Frame	
 	mSetStackFrame
-	
+	push	esi
+	push	ecx	
+
 ; Set up loop
 	mov		ecx, arrSize
 	mov		esi, pNumArr
+	mov		edi, arrSum
+	
+SUM_ARR:
+	lodsd		; load next value in array into EAX and increment ESI
+	add		[edi], eax
+	loop	SUM_ARR
+	
 
 ; Clean up stack
+	pop		esi
+	pop		ecx
 	mCleanStackFrame 16
 ; +------------------------------------------------------------+
 sumAvgArray ENDP
 ; +============================================================+
 
+; +============================================================+
+printArray PROC
+; Description:	Calculates the sum and average of an array
+;	
+; Receives:		@pNumArr - pointer to an array of unsigned integers
+;				arrSize - size of the array
+;               @arrSum - address of DWORD to store sum in
+;               @arrAvg - address of DWORD to store average
+; Returns:		the sum of the array (arrSum) and average (arrAg)
+; Pre:			arrSum and arrAvg argument must = 0 prior to call
+; Reg Changed:	
+; +============================================================+
+	pNumArr		EQU [ebp + 8]   ; array from which we read data
+	arrSize		EQU [ebp + 12]  ; size of array
+
+; Setup Stack Frame	
+	mSetStackFrame
+	push	esi
+	push	ecx	
+
+; Set up loop
+	mov		ecx, arrSize
+	
+PRINT_ARR:
+	
+
+; Clean up stack
+	pop		esi
+	pop		ecx
+	mCleanStackFrame 8
+; +------------------------------------------------------------+
+printArray ENDP
+; +============================================================+
 
 
 ; +============================================================+
