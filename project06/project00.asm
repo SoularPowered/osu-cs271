@@ -10,10 +10,10 @@ TITLE Programming Assignment 6    (project05-hillyer.asm)
 ; [Problem Definition]
 ; + Implement and test your own ReadVal and WriteVal procedures for unsigned integers.
 ; + Implement macros getString and displayString. The macros may use Irvine’s ReadString 
-;   to get input from the user, and WriteString to display output.
+;   to get input from the user, and WriteString to display output. [ DONE ]
 ;   - getString should display a prompt, then get the user’s keyboard input into a 
-;     memory location
-;   - displayString should the string stored in a specified memory location.
+;     memory location [DONE]
+;   - displayString should display the string stored in a specified memory location.
 ;   - readVal should invoke the getString macro to get the user’s string of digits. 
 ;     It should then convert the digit string to numeric, while validating the user’s 
 ;     input.
@@ -212,7 +212,12 @@ main PROC
 	call	CrLF
 
 ; Calculate the sum and average of the array
-;	call	sumAvgArray
+	push	offset	dataAvg
+	push	offset dataSum
+	mov		eax, DATA_ARRAY_SIZE
+	push	eax
+	push	pUserData
+	call	sumAvgArray
 	
 ; Print the values entered
 	displayString pNumbersMsg
@@ -222,14 +227,14 @@ main PROC
 
 ; Print the sum
 	displayString pSumMsg
-;	push dataSum
-	call	WriteVal
+	mov		eax, dataSum
+	call	WriteDec
 	call	CrLf
 
 ; Print the average
 	displayString pAvgMsg
-;	push	dataAvg
-	call	WriteVal
+	mov		eax, dataAvg
+	call	WriteDec
 	call	CrLf
 
 ; Print FareWell message
@@ -405,6 +410,34 @@ getUserData ENDP
 
 
 
+; +============================================================+
+sumAvgArray PROC
+; Description:	Calculates the sum and average of an array
+;	
+; Receives:		@pNumArr - pointer to an array of unsigned integers
+;				arrSize - size of the array
+;               @arrSum - address of DWORD to store sum in
+;               @arrAvg - address of DWORD to store average
+; Returns:		
+; Pre:			
+; Reg Changed:	
+; +============================================================+
+	pNumArr		EQU [ebp + 8]   ; pointer to array to fill with data
+	arrSize		EQU [ebp + 12]  ; size of array
+	arrSum		EQU [ebp + 16]  ; sum of values in array
+	arrAvg		EQU [ebp + 20]	; average of values in array
+	
+	mSetStackFrame
+	
+; Set up loop
+	mov		ecx, arrSize
+	mov		esi, pNumArr
+
+; Clean up stack
+	mCleanStackFrame 16
+; +------------------------------------------------------------+
+sumAvgArray ENDP
+; +============================================================+
 
 
 
