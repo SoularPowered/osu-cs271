@@ -259,12 +259,16 @@ ReadVal PROC
 ; Pre:			
 ; Reg Changed:	
 ; +------------------------------------------------------------+
-	pStrBuffer		EQU [ebp + 8]
+	pStrBuffer	EQU [ebp + 8]
 	result		EQU [ebp + 12]
 
 	mSetStackFrame
+	push	eax
 	push	ebx
+	push	ecx
+	push	edx
 	push	esi
+	push	edi
 
 ; Get string from user, setup ESI to point to pStrBuffer for lodsb and ensure we're moving forward
 	getString	pValuePrompt, pStrBuffer
@@ -274,10 +278,6 @@ FRESH_STRING:
 ; Convert digit string to numeric while validating user's input	
 
 CONVERT_STRING:
-;DEBUG:
-;	mov		edx, esi
-;	call	writestring
-;end debug
 	lodsb	 ; load next character from pStrBuffer into al
  
 ;f if character is 0, the null terminator for the string, then end of string - continue
@@ -326,8 +326,12 @@ GOOD_INPUT:
 	mov		[edi], ebx  ; store the result in EBX to the location pointed at by eax, which is result
 
 ; Clean up stack and return
+	pop		edi
 	pop		esi
+	pop		edx
+	pop		ecx
 	pop		ebx
+	pop		eax
 	mCleanStackFrame 8
 
 ; +------------------------------------------------------------+
@@ -372,7 +376,8 @@ getUserData PROC
 	pStrArr		EQU	[ebp + 16]  ; the string used to store the user's input
 
 	mSetStackFrame
-; 
+; Set up loop
+	mov		ecx, arrSize
 	mov		edi, pStrArr
 	push	offset singleInt
 	push	edi		; TODO: Pass this parameter in to this function
