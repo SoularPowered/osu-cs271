@@ -29,12 +29,12 @@ TITLE Programming Assignment 6    (project06-hillyer.asm)
 ;  1) User’s numeric input must be validated the hard way: Read the user's input as a 
 ;     string, and convert the string to numeric form. If the user enters non-digits or 
 ;     the number is too large for 32-bit registers, an error message should be displayed
-;     and the number should be discarded.
-;  2) Conversion routines must appropriately use the lodsb and/or stosb operators.
-;  3) All procedure parameters must be passed on the system stack.
+;     and the number should be discarded. [DONE]
+;  2) Conversion routines must appropriately use the lodsb and/or stosb operators. [DONE]
+;  3) All procedure parameters must be passed on the system stack. [DONE]
 ;  4) Addresses of prompts, identifying strings, and other memory locations should be 
-;     passed by address to the macros.
-;  5) Used registers must be saved and restored by the called procedures and macros.
+;     passed by address to the macros. [DONE] (Exception: my own macros don't always pass by memory)
+;  5) Used registers must be saved and restored by the called procedures and macros. [DONE]
 ;  6) The stack must be “cleaned up” by the called procedure. [DONE]
 ; =====================================================================================
 
@@ -101,7 +101,8 @@ displayString MACRO stringAddr:REQ
 ENDM
 ; +============================================================+
 
-callWriteVal MACRO integer
+; Call WriteVal procedure using pRawStringOut as consistent location for processing
+callWriteVal MACRO integer:REQ
 	mov		eax, integer
 	push	pRawStringOut
 	push	eax
@@ -198,10 +199,6 @@ main PROC
 ; Reg Changed:	Potentially all - main entrypoint
 ; +------------------------------------------------------------+
 
-; DEBUG TEST
-	
-	callWriteVal	5
-
 ; Display the program title and programmer's name & Get the user's name, and greet the user.
 	displayString 	pIntro
 	call			CrLf
@@ -239,14 +236,12 @@ main PROC
 
 ; Print the sum
 	displayString pSumMsg
-	mov		eax, dataSum
-	call	WriteDec
+	callWriteVal	dataSum
 	call	CrLf
 
 ; Print the average
 	displayString pAvgMsg
-	mov		eax, dataAvg
-	call	WriteDec
+	callWriteVal	dataAvg
 	call	CrLf
 
 ; Print FareWell message
@@ -406,7 +401,7 @@ NEXT_DIGIT:
 	jnz		NEXT_DIGIT
 
 ; call displayString - pass in edi+1 which sould point to the last character inserted
-	inc	edi
+	inc		edi
 	displayString edi
 
 ; Clean up stack and return
@@ -552,7 +547,7 @@ printArray PROC
 	
 PRINT_ARR:
 	lodsd
-	call	writedec
+	callWriteVal	eax
 	call	CrLf
 	loop	PRINT_ARR
 
