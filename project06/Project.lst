@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 16:28:07
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 16:38:03
 3Programming Assignment 6    (project05-hillyer.asm	     Page 1 - 1
 
 
@@ -572,25 +572,34 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 16:28:07
 					mSetStackFrame
  00000154  55		     1		push	ebp
  00000155  8B EC	     1		mov		ebp, esp
-				; Set up loop
- 00000157  8B 4D 0C			mov		ecx, arrSize
- 0000015A  8B 7D 10			mov		edi, pStrArr
- 0000015D  68 0000029D R		push	offset singleInt
- 00000162  57				push	edi		; TODO: Pass this parameter in to this function
- 00000163  E8 FFFFFF4A			call	ReadVal
-				; DEBUG:
- 00000168  A1 0000029D R		mov		eax, singleInt
- 0000016D  E8 00000000 E		call	writedec
+ 00000157  50				push	eax
+ 00000158  52				push	edx
 					
+				; Set up loop
+ 00000159  8B 4D 0C			mov		ecx, arrSize
+ 0000015C  8B 7D 08			mov		edi, pNumArr
+
+ 0000015F			FILL_ARR:
+				; Call ReadVal with 2 args
+ 0000015F  8B 55 10			mov		edx, pStrArr
+ 00000162  68 0000029D R		push	offset singleInt  ; singleInt pased by ref, gets return val by ref from ReadVal
+ 00000167  52				push	edx				  ; pStrArr 
+ 00000168  E8 FFFFFF45			call	ReadVal
+				; DEBUG:
+ 0000016D  A1 0000029D R		mov		eax, singleInt
+ 00000172  AA				stosb
+ 00000173  E2 EA			loop	FILL_ARR
 
 				; Clean up stack and return
+ 00000175  5A				pop		edx
+ 00000176  58				pop		eax
 					mCleanStackFrame 12
- 00000172  8B E5	     1		mov		esp, ebp 
- 00000174  5D		     1		pop		ebp
- 00000175  C2 000C	     1		ret		12
+ 00000177  8B E5	     1		mov		esp, ebp 
+ 00000179  5D		     1		pop		ebp
+ 0000017A  C2 000C	     1		ret		12
 
 				; +------------------------------------------------------------+
- 00000178			getUserData ENDP
+ 0000017D			getUserData ENDP
 				; +============================================================+
 
 
@@ -626,7 +635,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 16:28:07
 				someprocess ENDP
 				; +------------------------------------------------------------+
 
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 16:28:07
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 16:38:03
 3Programming Assignment 6    (project05-hillyer.asm	     Symbols 2 - 1
 
 
@@ -731,7 +740,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 000002D5 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000178 Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000017D Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -845,7 +854,8 @@ WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteVal . . . . . . . . . . . .	P Near	 0000014D _TEXT	Length= 00000007 Public STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-getUserData  . . . . . . . . . .	P Near	 00000154 _TEXT	Length= 00000024 Public STDCALL
+getUserData  . . . . . . . . . .	P Near	 00000154 _TEXT	Length= 00000029 Public STDCALL
+  FILL_ARR . . . . . . . . . . .	L Near	 0000015F _TEXT	
 main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000B2 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C

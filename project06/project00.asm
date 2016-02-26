@@ -376,18 +376,27 @@ getUserData PROC
 	pStrArr		EQU	[ebp + 16]  ; the string used to store the user's input
 
 	mSetStackFrame
+	push	eax
+	push	edx
+	
 ; Set up loop
 	mov		ecx, arrSize
-	mov		edi, pStrArr
-	push	offset singleInt
-	push	edi		; TODO: Pass this parameter in to this function
+	mov		edi, pNumArr
+
+FILL_ARR:
+; Call ReadVal with 2 args
+	mov		edx, pStrArr
+	push	offset singleInt  ; singleInt pased by ref, gets return val by ref from ReadVal
+	push	edx				  ; pStrArr 
 	call	ReadVal
 ; DEBUG:
 	mov		eax, singleInt
-	call	writedec
-	
+	stosb
+	loop	FILL_ARR
 
 ; Clean up stack and return
+	pop		edx
+	pop		eax
 	mCleanStackFrame 12
 
 ; +------------------------------------------------------------+
