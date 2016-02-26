@@ -1,35 +1,30 @@
-TITLE Project     (project.asm)
+TITLE Sort & Find Median     (whatever.asm)
 
-; Author: Shawn S Hillyer
-; CS271-400 / Project ID                 Date: 00/00/2016
-; Description:
+; Author: Jason Goldfine-Middleton
+; E-mail: goldfinj@oregonstate.edu
+; Course / Project ID: CS 271 Section 400 / Assignment 5             Due Date: 02/28/16
+; Description: This program produces an array of random numbers, sorts it, and
+;              calculates the median.
 
 INCLUDE Irvine32.inc
 
-; (insert constant definitions here)
+
 
 .data
+matrix   WORD   22 DUP(30 DUP(?))
 
 
-
-; (insert variable definitions here)
 
 .code
+
+
 main PROC
 
-mov eax,+4823424
-mov ebx,-423
-imul ebx
+mov   eax, SIZEOF matrix
+call writedec
 
 
-
-
-
-; (insert executable instructions here)
-
-	exit	; exit to operating system
+    exit    ; exit to operating system
 main ENDP
-
-; (insert additional procedures here)
 
 END main

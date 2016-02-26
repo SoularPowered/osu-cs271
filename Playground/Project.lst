@@ -1,12 +1,14 @@
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/24/16 14:56:43
-Project     (project.asm				     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 22:07:54
+%Sort & Find Median     (whatever.asm			     Page 1 - 1
 
 
-				TITLE Project     (project.asm)
+				TITLE Sort & Find Median     (whatever.asm)
 
-				; Author: Shawn S Hillyer
-				; CS271-400 / Project ID                 Date: 00/00/2016
-				; Description:
+				; Author: Jason Goldfine-Middleton
+				; E-mail: goldfinj@oregonstate.edu
+				; Course / Project ID: CS 271 Section 400 / Assignment 5             Due Date: 02/28/16
+				; Description: This program produces an array of random numbers, sorts it, and
+				;              calculates the median.
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -27,37 +29,34 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/24/16 14:56:43
 			      C .LIST
 			      C 
 
-				; (insert constant definitions here)
+
 
  00000000			.data
+ 00000000  00000016 [		matrix   WORD   22 DUP(30 DUP(?))
+	    0000001E [
+	     0000
+	    ]
+	   ]
 
 
-
-				; (insert variable definitions here)
 
  00000000			.code
+
+
  00000000			main PROC
 
- 00000000  B8 00499980		mov eax,+4823424
- 00000005  BB FFFFFE59		mov ebx,-423
- 0000000A  F7 EB		imul ebx
+ 00000000  B8 00000528		mov   eax, SIZEOF matrix
+ 00000005  E8 00000000 E	call writedec
 
 
-
-
-
-				; (insert executable instructions here)
-
-					exit	; exit to operating system
- 0000000C  6A 00	   *	    push   +000000000h
- 0000000E  E8 00000000 E   *	    call   ExitProcess
- 00000013			main ENDP
-
-				; (insert additional procedures here)
+				    exit    ; exit to operating system
+ 0000000A  6A 00	   *	    push   +000000000h
+ 0000000C  E8 00000000 E   *	    call   ExitProcess
+ 00000011			main ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/24/16 14:56:43
-Project     (project.asm				     Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/24/16 22:07:54
+%Sort & Find Median     (whatever.asm			     Symbols 2 - 1
 
 
 
@@ -150,8 +149,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000000 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000013 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000528 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000011 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -258,7 +257,7 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000013 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000011 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -491,6 +490,7 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
+matrix . . . . . . . . . . . . .	Word	 00000000 _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA

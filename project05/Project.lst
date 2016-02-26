@@ -1,12 +1,78 @@
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/03/16 23:24:54
-#Program Template     (template.asm			     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/17/16 21:37:49
+3Programming Assignment 5    (project05-hillyer.asm	     Page 1 - 1
 
 
-				TITLE Program Template     (template.asm)
+				TITLE Programming Assignment 5    (project05-hillyer.asm)
 
-				; Author:
-				; Course / Project ID                 Date:
-				; Description:
+				; ==========================================================================================================
+				; Author: Shawn S Hillyer								Email: hillyers@oregonstate.edu
+				; CS271-400 / Project ID: Programming Assignment 5		Due Date: 02/28/2016
+				; ==========================================================================================================
+				; ==========================================================================================================
+				; [Description]  
+				; Write and test a MASM program to perform the following tasks:
+				; 1. Introduce the program.
+				; 2. Get a user request in the range [min = 10 .. max = 200].
+				; 3. Generate request random integers in the range [lo = 100 .. hi = 999], storing them in consecutive 
+				;    elements of an array.
+				; 4. Display the list of integers before sorting, 10 numbers per line.
+				; 5. Sort the list in descending order (i.e., largest first).
+				; 6. Calculate and display the median value, rounded to the nearest integer.
+				; 7. Display the sorted list, 10 numbers per line.
+				;
+				; ==========================================================================================================
+				; [Requirements]
+				; 1.  The title, programmer's name, and brief instructions must be displayed on the screen.
+				; 2.  The program must validate the user’s request.
+				; 3.  min, max, lo, and hi must be declared and used as global constants. Strings may be declared as global 
+				;     variables or constants.
+				; 4.  The program must be constructed using procedures. At least the following procedures are required:
+				;      A. main   [DONE]
+				;      B. introduction	[DONE]
+				;      C. get data {parameters: request (reference)}	[DONE]
+				;      D. fill array {parameters: request (value), array (reference)}	[DONE]
+				;      E. sort list {parameters: array (reference), request (value)}	
+				;           i. exchange elements (for most sorting algorithms): {parameters: array[i] (reference),
+				;              array[j] (reference), where i and j are the indexes of elements to be exchanged}
+				;      F. display median {parameters: array (reference), request (value)}	[DONE]
+				;      G. display list {parameters: array (reference), request (value), title (reference)}	[DONE]
+				; 5.  Parameters must be passed by value or by reference on the system stack as noted above.	[DONE]
+				; 6.  There must be just one procedure to display the list. This procedure must be called twice: once to 
+				;     display the unsorted list, and once to display the sorted list.  [DONE]
+				; 7.  Procedures (except main) should not reference .data segment variables by name. request, array, and 
+				;     titles for the sorted/unsorted lists should be declared in the .data segment, but procedures must use them 
+				;     as parameters. Procedures may use local variables when appropriate. Global constants are OK. [DONE]
+				; 8.  The program must use appropriate addressing modes for array elements. [TODO: What does this mean??]
+				; 9.  The two lists must be identified when they are displayed (use the title parameter for the display 
+				;     procedure). [DONE]
+				; 10. The program must be fully documented. This includes a complete header block for the program and for
+				;     each procedure, and a comment outline to explain each section of code. [DONE]
+				; 11. The code and the output must be well-formatted. [DONE]
+				; ==========================================================================================================
+				; [Important Notes]
+				; 1. The Irvine library provides procedures for generating random numbers. Call Randomize once at the
+				;    beginning of the program (to set up so you don't get the same sequence every time), and call RandomRange
+				;    to get a pseudo-random number. (See the documentation in Lecture slides.) [DONE]
+				; 2. The Selection Sort is probably the easiest sorting algorithm to implement. Here is a version of the
+				;    descending order algorithm, where request is the number of array elements being sorted, and exchange is
+				;    the code to exchange two elements of array:
+				;
+				;      for(k=0; k<request-1; k++) {
+				;        i = k;
+				;        for(j=k+1; j<request; j++) {
+				;          if(array[j] > array[i])
+				;            i = j;
+				;          }
+				;        exchange(array[k], array[i]);
+				;      }
+				; 3. The median is calculated after the array is sorted. It is the "middle" element of the sorted list. If the
+				;    number of elements is even, the median is the average of the middle two elements (may be rounded). [DONE]
+				; ==========================================================================================================
+				; [Extra-credit options]
+				; [Not Implemented]	1. Display the numbers ordered by column instead of by row
+				; [Not Implemented]	2. Use a recursive sorting algorithm (e.g., Merge Sort, Quick Sort, Heap Sort, etc.).                          
+				; [Not Implemented]	3. Implement the program using floating-point numbers and the floating-point processor
+				; [Not Implemented]	4. Generate the numbers into a file; then read the file into the array
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -27,27 +93,748 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/03/16 23:24:54
 			      C .LIST
 			      C 
 
-				; (insert constant definitions here)
+				; *********************
+				; Constants           *
+				; *********************
+ = 0000000A			MIN = 10	; minimum quantity of numbers to generate
+ = 000000C8			MAX = 200	; maximum quantity of numbers to generate
+ = 00000064			LO = 100	; lowest range for random numbers
+ = 000003E7			HI = 999	; highest range for random numbers
 
+
+				; *********************
+				; Variables           *
+				; *********************
  00000000			.data
 
-				; (insert variable definitions here)
+				; Strings - Output
+ 00000000 53 6F 72 74 69		intro			BYTE	"Sorting Random Integers",0
+	   6E 67 20 52 61
+	   6E 64 6F 6D 20
+	   49 6E 74 65 67
+	   65 72 73 00
+ 00000018 50 72 6F 67 72		programmer		BYTE	"Programmed by Shawn S Hillyer",0
+	   61 6D 6D 65 64
+	   20 62 79 20 53
+	   68 61 77 6E 20
+	   53 20 48 69 6C
+	   6C 79 65 72 00
+				;	ecIntro_1		BYTE	"**EC: Displays the numbers ordered by column instead of by row.",0
+				;	ecIntro_2		BYTE	"**EC: Uses a recursive sorting algorithm.",0
+				;	ecIntro_3		BYTE	"**EC: Uses floating-point numbers and floating-point processor.",0
+				;	ecIntro_4		BYTE	"**EC: Generates the numbers into a file, then reads the file into the array.",0
+					
+ 00000036 54 68 69 73 20		instructions_1	BYTE	"This program generates random numbers in the range [",0
+	   70 72 6F 67 72
+	   61 6D 20 67 65
+	   6E 65 72 61 74
+	   65 73 20 72 61
+	   6E 64 6F 6D 20
+	   6E 75 6D 62 65
+	   72 73 20 69 6E
+	   20 74 68 65 20
+	   72 61 6E 67 65
+	   20 5B 00
+ 0000006B 20 2E 2E 20 00		instructions_2	BYTE	" .. ",0
+ 00000070 5D 2C 00			instructions_3	BYTE	"],",0
+ 00000073 64 69 73 70 6C		instructions_4	BYTE	"displays the original list, sorts the list, and calculates the ",0
+	   61 79 73 20 74
+	   68 65 20 6F 72
+	   69 67 69 6E 61
+	   6C 20 6C 69 73
+	   74 2C 20 73 6F
+	   72 74 73 20 74
+	   68 65 20 6C 69
+	   73 74 2C 20 61
+	   6E 64 20 63 61
+	   6C 63 75 6C 61
+	   74 65 73 20 74
+	   68 65 20 00
+ 000000B3 6D 65 64 69 61		instructions_5	BYTE	"median value. Finally, it displays the list in descending order.",0
+	   6E 20 76 61 6C
+	   75 65 2E 20 46
+	   69 6E 61 6C 6C
+	   79 2C 20 69 74
+	   20 64 69 73 70
+	   6C 61 79 73 20
+	   74 68 65 20 6C
+	   69 73 74 20 69
+	   6E 20 64 65 73
+	   63 65 6E 64 69
+	   6E 67 20 6F 72
+	   64 65 72 2E 00
+ 000000F4 20 63 6F 6D 70		rangeEnd		BYTE	" composites.",0
+	   6F 73 69 74 65
+	   73 2E 00
+
+ 00000101 48 6F 77 20 6D		valuePrompt_1	BYTE	"How many numbers should be generated? [",0
+	   61 6E 79 20 6E
+	   75 6D 62 65 72
+	   73 20 73 68 6F
+	   75 6C 64 20 62
+	   65 20 67 65 6E
+	   65 72 61 74 65
+	   64 3F 20 5B 00
+ 00000129 20 2E 2E 20 00		valuePrompt_2	BYTE	" .. ",0
+ 0000012E 5D 3A 20 00			valuePrompt_3	BYTE	"]: ",0
+ 00000132 49 6E 76 61 6C		outOfRangeMsg	BYTE	"Invalid input",0
+	   69 64 20 69 6E
+	   70 75 74 00
+						
+ 00000140 54 68 65 20 75		unsortedTitle	BYTE	"The unsorted random numbers:",0
+	   6E 73 6F 72 74
+	   65 64 20 72 61
+	   6E 64 6F 6D 20
+	   6E 75 6D 62 65
+	   72 73 3A 00
+ 0000015D 54 68 65 20 73		sortedTitle		BYTE	"The sorted list:",0
+	   6F 72 74 65 64
+	   20 6C 69 73 74
+	   3A 00
+ 0000016E 54 68 65 20 6D		medianTitle		BYTE	"The median is ",0
+	   65 64 69 61 6E
+	   20 69 73 20 00
+
+ 0000017D 49 27 6D 20 67		goodbye1		BYTE	"I'm glad we sorted this all out. Catch you later.",0
+	   6C 61 64 20 77
+	   65 20 73 6F 72
+	   74 65 64 20 74
+	   68 69 73 20 61
+	   6C 6C 20 6F 75
+	   74 2E 20 43 61
+	   74 63 68 20 79
+	   6F 75 20 6C 61
+	   74 65 72 2E 00
+
+
+				; Numbers used in processing / formatting the data
+ 000001AF 00000000			request			DWORD	0			; number of random values to generate, input by user
+ 000001B3  000000C8 [			array			DWORD	MAX DUP(?)  ; to store array of random values, to later be sorted
+	    00000000
+	   ]
 
  00000000			.code
+
+				; +------------------------------------------------------------+
  00000000			main PROC
+				; Description:	Main program logic. Generates random numbers, prints
+				;   in unsorted order, then sorts and prints median and sorted order.
+				; Receives:		None
+				; Returns:		None
+				; Pre:			None
+				; Reg Changed:	Potentially all - main entrypoint
+				; +------------------------------------------------------------+
 
-				; (insert executable instructions here)
+				; seed random number generater, used by fillArray
+ 00000000  E8 00000000 E		call	Randomize  
 
-					exit	; exit to operating system
- 00000000  6A 00	   *	    push   +000000000h
- 00000002  E8 00000000 E   *	    call   ExitProcess
- 00000007			main ENDP
+				; Display the program title and programmer’s name & Get the user’s name, and greet the user.
+ 00000005  68 00000018 R		push	OFFSET programmer
+ 0000000A  68 00000000 R		push	OFFSET intro
+ 0000000F  E8 000000AC			call	introduction
 
-				; (insert additional procedures here)
+				; Display instructions for the user.
+ 00000014  68 000000B3 R		push	OFFSET instructions_5
+ 00000019  68 00000073 R		push	OFFSET instructions_4
+ 0000001E  68 00000070 R		push	OFFSET instructions_3
+ 00000023  68 0000006B R		push	OFFSET instructions_2
+ 00000028  68 00000036 R		push	OFFSET instructions_1
+ 0000002D  E8 000000B6			call	instructions
+
+				; Prompt the user for an integer in range [min .. max] and store return value in getUserData	
+ 00000032  68 00000132 R		push	OFFSET outOfRangeMsg
+ 00000037  68 0000012E R		push	OFFSET valuePrompt_3
+ 0000003C  68 00000129 R		push	OFFSET valuePrompt_2
+ 00000041  68 00000101 R		push	OFFSET valuePrompt_1
+ 00000046  68 000001AF R		push	OFFSET request
+ 0000004B  E8 0000010E			call	getUserData
+
+				; Generate the random integers and store in array
+ 00000050  68 000001B3 R		push	OFFSET array
+ 00000055  FF 35 000001AF R		push	request	
+ 0000005B  E8 0000015C			call	fillArray
+
+				; Display the list of integers before sorting, 10 numbers per line.
+ 00000060  68 00000140 R		push	OFFSET	unsortedTitle
+ 00000065  FF 35 000001AF R		push	request
+ 0000006B  68 000001B3 R		push	OFFSET array
+ 00000070  E8 0000020E			call	displayList
+
+				; Sort the list in descending order
+ 00000075  FF 35 000001AF R		push	request
+ 0000007B  68 000001B3 R		push	OFFSET array
+ 00000080  E8 00000158			call	sortList
+
+				; Calculate and display the median value, rounded to the nearest integer
+ 00000085  68 0000016E R		push	OFFSET medianTitle
+ 0000008A  FF 35 000001AF R		push	request
+ 00000090  68 000001B3 R		push	OFFSET array
+ 00000095  E8 00000189			call	displayMedian
+
+				; Display the sorted list, 10 numbers per line
+ 0000009A  68 0000015D R		push	OFFSET	sortedTitle
+ 0000009F  FF 35 000001AF R		push	request
+ 000000A5  68 000001B3 R		push	OFFSET array
+ 000000AA  E8 000001D4			call	displayList
+
+				; Print FareWell message
+ 000000AF  68 0000017D R		push	OFFSET goodbye1
+ 000000B4  E8 0000008A			call	farewell
+
+				; exit to operating system
+					exit	
+ 000000B9  6A 00	   *	    push   +000000000h
+ 000000BB  E8 00000000 E   *	    call   ExitProcess
+ 000000C0			main ENDP
+
+
+				; +------------------------------------------------------------+
+ 000000C0			introduction	PROC USES edx
+				; Description:	Prints introduction to screen
+				; Receives:		Offset of the introduction strings
+				; Returns:		None
+				; Pre:			None
+				; Reg Changed:	None
+				; +------------------------------------------------------------+
+
+ 000000C0  52		   *	    push   edx
+ 000000C1  55				push	ebp
+ 000000C2  8B EC			mov		ebp, esp
+
+				; Print Program Title and Programmer's Name
+ 000000C4  8B 55 0C			mov		edx, [ebp + 12]		; Offset starts at 12 because of the implicit edx PUSH from USES in declaration of procedure
+ 000000C7  E8 00000000 E		call 	WriteString 
+ 000000CC  E8 00000000 E		call 	CrLf
+
+ 000000D1  8B 55 10			mov		edx, [ebp + 16]
+ 000000D4  E8 00000000 E		call 	WriteString
+ 000000D9  E8 00000000 E		call 	CrLf
+
+				; Extra Credit 1 Implemented message
+				;	mov		edx, [ebp + 20]
+				;	call	WriteString
+				;	call	CrLf
+					
+				; Extra Credit 2 Implemented message
+				;	mov		edx, [ebp + 24]
+				;	call	WriteString
+				;	call	CrLf
+
+				; Extra Credit 3 Implemented message
+				;	mov		edx, edx, [ebp + 28]
+				;	call	WriteString
+				;	call	CrLf
+
+				; Extra Credit 4 Implemented message
+				;	mov		edx, edx, [ebp + 32]
+				;	call	WriteString
+				;	call	CrLf
+					
+ 000000DE  E8 00000000 E		call 	CrLf
+
+				; Clean up stack and return
+ 000000E3  5D				pop		ebp
+ 000000E4  5A		   *	    pop    edx
+ 000000E5  C2 0008			ret		8		; make sure to modify this if add any extra credit addresses
+				; +------------------------------------------------------------+
+ 000000E8			introduction ENDP
+				; +------------------------------------------------------------+
+
+
+
+				; +------------------------------------------------------------+
+ 000000E8			instructions	PROC	USES	edx eax
+				; Description:	Print instructions for user to screen
+				; Receives:		Offset of strings, by reference)
+				; Returns:		None
+				; Pre:			HI and LO constants defined as integer constants
+				; Reg Changed:	None
+				; +------------------------------------------------------------+
+ 000000E8  52		   *	    push   edx
+ 000000E9  50		   *	    push   eax
+ 000000EA  55				push	ebp
+ 000000EB  8B EC			mov		ebp, esp
+
+				; Print description of what program will do
+ 000000ED  8B 55 10			mov		edx, [ebp + 16]		; first parameter at offset 16 due to USES directive
+ 000000F0  E8 00000000 E		call	WriteString			; "This program generates random numbers in the range ["
+ 000000F5  B8 00000064			mov		eax, LO	
+ 000000FA  E8 00000000 E		call	WriteDec
+ 000000FF  8B 55 14			mov		edx, [ebp + 20]		
+ 00000102  E8 00000000 E		call	WriteString			; " .. "
+ 00000107  B8 000003E7			mov		eax, HI
+ 0000010C  E8 00000000 E		call	WriteDec
+ 00000111  8B 55 18			mov		edx, [ebp + 24]
+ 00000114  E8 00000000 E		call	WriteString			; "],"
+ 00000119  E8 00000000 E		call	CrLf
+ 0000011E  8B 55 1C			mov		edx, [ebp + 28]
+ 00000121  E8 00000000 E		call	WriteString			; "displays the original list, sorts the list, and calculates the "
+ 00000126  E8 00000000 E		call	CrLf
+ 0000012B  8B 55 20			mov		edx, [ebp +32]
+ 0000012E  E8 00000000 E		call	WriteString			; "median value. Finally, it displays the list in descending order."
+ 00000133  E8 00000000 E		call	CrLf
+ 00000138  E8 00000000 E		call	CrLf
+
+				; Clean up stack and return
+ 0000013D  5D				pop		ebp
+ 0000013E  58		   *	    pop    eax
+ 0000013F  5A		   *	    pop    edx
+ 00000140  C2 0014			ret		20 
+				; +------------------------------------------------------------+
+ 00000143			instructions ENDP
+				; +------------------------------------------------------------+
+
+
+
+				; +------------------------------------------------------------+
+ 00000143			farewell		PROC	USES	edx
+				; Description:	Prints a farewell message to user
+				; Receives:		Offsets of string to print farewell message
+				; Returns:		None
+				; Pre:			None
+				; Reg Changed:	None
+				; +------------------------------------------------------------+
+ 00000143  52		   *	    push   edx
+ 00000144  55				push	ebp
+ 00000145  8B EC			mov		ebp,esp
+
+				; Add some space and say goodbye
+ 00000147  8B 55 0C			mov		edx, [ebp + 12]
+ 0000014A  E8 00000000 E		call	WriteString
+ 0000014F  E8 00000000 E		call	CrLf
+ 00000154  E8 00000000 E		call	CrLf
+
+				; Clean up stack and return
+ 00000159  5D				pop		ebp
+ 0000015A  5A		   *	    pop    edx
+ 0000015B  C2 0004			ret		4
+				; +------------------------------------------------------------+
+ 0000015E			farewell ENDP
+				; +------------------------------------------------------------+
+
+
+
+				; +------------------------------------------------------------+
+ 0000015E			getUserData	PROC	USES	eax edx
+				; Description:	Prompts user for int in range [MIN .. MAX]
+				;   until a valid value is input
+				; Receives:		Request {reference}
+				; Returns:		Request {by reference}
+				; Pre:			MIN and MAX positive integer constants; MIN < MAX
+				; Reg Changed:	None
+				; +------------------------------------------------------------+
+ 0000015E  50		   *	    push   eax
+ 0000015F  52		   *	    push   edx
+ 00000160  55				push	ebp
+ 00000161  8B EC			mov		ebp, esp
+
+ 00000163			GET_INPUT:
+				; Print message to user
+ 00000163  8B 55 14			mov		edx, [ebp+20]
+ 00000166  E8 00000000 E		call	WriteString
+ 0000016B  B8 0000000A			mov		eax, MIN
+ 00000170  E8 00000000 E		call	WriteDec
+ 00000175  8B 55 18			mov		edx, [ebp+24]
+ 00000178  E8 00000000 E		call	WriteString
+ 0000017D  B8 000000C8			mov		eax, MAX
+ 00000182  E8 00000000 E		call	WriteDec
+ 00000187  8B 55 1C			mov		edx, [ebp+28]
+ 0000018A  E8 00000000 E		call	WriteString
+
+				; Get input and validate in range [MIN .. MAX]
+ 0000018F  8B 7D 10			mov		edi, [ebp + 16] ; destination will be &request
+ 00000192  E8 00000000 E		call	ReadDec 
+ 00000197  83 F8 0A			cmp		eax, MIN
+ 0000019A  72 09			jb		OUT_OF_RANGE
+ 0000019C  3D 000000C8			cmp		eax, MAX
+ 000001A1  77 02			ja		OUT_OF_RANGE
+ 000001A3  EB 0F			jmp		IN_RANGE
+
+ 000001A5			OUT_OF_RANGE:
+ 000001A5  8B 55 20			mov		edx, [ebp + 32]
+ 000001A8  E8 00000000 E		call	WriteString
+ 000001AD  E8 00000000 E		call	CrLf
+ 000001B2  EB AF			jmp		GET_INPUT
+
+ 000001B4			IN_RANGE:
+				; Store result in reference variable, request
+ 000001B4  89 07			mov		[edi], eax; ; test -- store 55 in request
+
+				; Clean up stack and return
+ 000001B6  5D				pop		ebp
+ 000001B7  5A		   *	    pop    edx
+ 000001B8  58		   *	    pop    eax
+ 000001B9  C2 0014			ret		20
+				; +------------------------------------------------------------+
+ 000001BC			getUserData ENDP
+				; +------------------------------------------------------------+
+
+
+
+				; +------------------------------------------------------------+
+ 000001BC			fillArray	PROC
+				; Description:	Fills the array with random numbers from 
+				; Receives:		request (value), array (reference)
+				; Returns:		array is populated with n=request values (by ref)
+				; Pre:			request must be positive; array must refer to an
+				;               array of at least size request
+				; Reg Changed:	
+				; +------------------------------------------------------------+
+ 000001BC  55				push	ebp
+ 000001BD  8B EC			mov		ebp, esp
+
+ 000001BF  8B 7D 0C			mov		edi, [ebp + 12] ; @array
+ 000001C2  8B 4D 08			mov		ecx, [ebp + 8]  ; set ecx to value of request
+					
+ 000001C5			FILL_VALS:
+ 000001C5  B8 000000BF			mov		eax, MAX + 1 - MIN ; randomrange returns from 0 to n-1, so we need to get value and add back in later
+ 000001CA  E8 00000000 E		call	RandomRange
+ 000001CF  83 C0 0A			add		eax, MIN	   ; add back in the offset
+ 000001D2  89 07			mov		[edi], eax     ; store in the array
+ 000001D4  83 C7 04			add		edi, 4  ; increment to next element
+ 000001D7  E2 EC			loop	FILL_VALS
+
+				; Clean up stack and return	
+ 000001D9  5D				pop		ebp
+ 000001DA  C2 0008			ret		8
+				; +------------------------------------------------------------+
+ 000001DD			fillArray ENDP
+				; +------------------------------------------------------------+
+
+
+
+				; +------------------------------------------------------------+
+ 000001DD			sortList PROC USES ecx eax esi
+				; Description:	Sorts an array in descending order (bubble sort)
+				; Receives:		array (reference), request (value)
+				; Returns:		array is sorted
+				; Pre:			array must be of at least size request
+				; Reg Changed:	
+				; +------------------------------------------------------------+
+ = DWORD PTR [ebp + 20]			arr		EQU DWORD PTR [ebp + 20]
+ = DWORD PTR [ebp + 24]			arrSize	EQU DWORD PTR [ebp + 24]
+					
+ 000001DD  51		   *	    push   ecx
+ 000001DE  50		   *	    push   eax
+ 000001DF  56		   *	    push   esi
+ 000001E0  55				push	ebp
+ 000001E1  8B EC			mov		ebp, esp
+
+				; Set up ECX for this style of for loop:
+				;	for (ecx1 = arrSize - 1; ecx > 0; ecx--)
+ 000001E3  8B 4D 18			mov		ecx, arrSize
+ 000001E6  49				dec		ecx				; cx1 = N-1
+				; While ( ecx1 > 0)
+				;   Compare array[ecx1] to every element from array[0] to array[request-1]
+
+ 000001E7			OUTER_LOOP:
+ 000001E7  51				push	ecx				; save outer loop variable
+ 000001E8  8B 75 14			mov		esi, arr		; esi = @array[0]
+
+ 000001EB			INNER_LOOP:
+				; Compare array[ecx2] to array[ecx2 + 1] (note that ecx2 starts as same as ecx1 but increments and is later restored to ecx1)
+ 000001EB  8B 06			mov		eax, [esi]		; eax = array[ecx]
+ 000001ED  39 46 04			cmp		[esi+4], eax
+
+				; if arr[ecx2] >= arr[ecx2 + 1], do not exchange the values
+ 000001F0  7C 05			jl		NO_SWAP				
+ 000001F2  87 46 04			xchg	eax, [esi+4]	; else exchange the pair
+ 000001F5  89 06			mov		[esi], eax		
+
+ 000001F7			NO_SWAP:
+ 000001F7  83 C6 04			add		esi, 4		
+ 000001FA  E2 EF			loop	INNER_LOOP		; ecx2--
+					; END Inner Loop
+
+				; restore outer loop counter
+ 000001FC  59				pop		ecx			
+ 000001FD  E2 E8			loop	OUTER_LOOP
+					; END Outer Loop
+
+				; Clean up stack and return
+ 000001FF  8B E5			mov		esp, ebp	; remove locals from stack
+ 00000201  5D				pop		ebp
+ 00000202  5E		   *	    pop    esi
+ 00000203  58		   *	    pop    eax
+ 00000204  59		   *	    pop    ecx
+ 00000205  C2 0008			ret		8
+				; +------------------------------------------------------------+
+ 00000208			sortList ENDP
+				; +------------------------------------------------------------+
+
+
+				; +------------------------------------------------------------+
+ 00000208			exchange PROC USES eax ebx
+				; Description:	exchange elements of an array
+				; Receives:		array[i] (reference) array[j] (reference), where
+				;  i and j are indices of array to be exchanged
+				; Returns:		array[i], array[j] updated by reference (swapped)
+				; Pre:			i and j are within range of array[0] to array[request-1]
+				; Reg Changed:	None
+				;
+				;  NOT CALLED / FULLY TESTED because I used simpler sort algorithm
+				;
+				; +------------------------------------------------------------+
+ = DWORD PTR [ebp + 16]			arr_i EQU DWORD PTR [ebp + 16]
+ = DWORD PTR [ebp + 20]			arr_j EQU DWORD PTR [ebp + 20]
+
+ 00000208  50		   *	    push   eax
+ 00000209  53		   *	    push   ebx
+ 0000020A  55				push	ebp
+ 0000020B  8B EC			mov		ebp, esp
+
+				; Dereference values pointed at by arr_i / arr_j then store each in the opposite memory address
+ 0000020D  8B 45 10			mov		eax, arr_i		; eax = @array[i]
+ 00000210  8B 5D 14			mov		ebx, arr_j		; ebx = @array[j]
+ 00000213  8B 00			mov		eax, [eax]
+ 00000215  8B 1B			mov		ebx, [ebx]		
+					; put the value that was in @array[j] into array[i] and vice-versa
+ 00000217  89 5D 10			mov		[arr_i], ebx		; array[i] = array[j]
+ 0000021A  89 45 14			mov		[arr_j], eax		; array[j] = array[i]
+					
+				; Clean up stack and return
+ 0000021D  5D				pop		ebp
+ 0000021E  5B		   *	    pop    ebx
+ 0000021F  58		   *	    pop    eax
+ 00000220  C2 0008			ret		8
+				; +------------------------------------------------------------+
+ 00000223			exchange ENDP
+				; +------------------------------------------------------------+
+
+
+				; +------------------------------------------------------------+
+ 00000223			displayMedian PROC
+				; Description:	Displays the median value in a sorted array
+				;	If odd, goes to middle index. If even, average of two in mid
+				; Receives:		array (reference), request (value)
+				; Returns:		None
+				; Pre:			Array must be in sorted order or results bogus
+				; Reg Changed:	eax, ebx, edx, edi
+				; +------------------------------------------------------------+
+ 00000223  55				push	ebp
+ 00000224  8B EC			mov		ebp, esp
+
+ 00000226  8B 7D 08			mov		edi, [ebp + 8]	; edi <- @array
+
+				; divide request by 2 (request is odd) or the "right" middle value (if request even)
+ 00000229  8B 45 0C			mov		eax, [ebp + 12]    ; eax <- request
+ 0000022C  BB 00000002			mov		ebx, 2		; coincidentally we can check edx to see if even, and eax if not to get the index to use
+ 00000231  BA 00000000			mov		edx, 0
+ 00000236  F7 F3			div		ebx
+
+				; Multiply by 4 (DWORD is 4 bytes) and we get the correct offset. Normally we'd add one to get a midpoint but counting
+				; starts at zero for arrays. This handles finding the middle of an odd-sized array
+ 00000238  BB 00000004			mov		ebx, 4
+ 0000023D  BA 00000000			mov		edx, 0
+ 00000242  F7 E3			mul		ebx
+ 00000244  03 F8			add		edi, eax	; edi now references array[request/2]
+
+				; Check to see if the request size was even or not. TODO: Refactor to add a local to store from our earlier division
+ 00000246  8B 45 0C			mov		eax, [ebp + 12]    ; eax <- request
+ 00000249  BB 00000002			mov		ebx, 2		
+ 0000024E  BA 00000000			mov		edx, 0
+ 00000253  F7 F3			div		ebx
+ 00000255  83 FA 00			cmp		edx, 0
+ 00000258  75 11			jnz		ODD_SIZE ; if not even, our value in edi is fine - go print it
+
+				; else array size is even -> calculate the average of [edi] and [edi - 4]
+ 0000025A  8B 07			mov		eax, [edi]
+ 0000025C  83 EF 04			sub		edi, 4
+ 0000025F  03 07			add		eax, [edi]
+ 00000261  F7 F3			div		ebx			; eax now holds the average of the middle two values
+				; check the remainder... if != 0, then the average is x.5, so add 1 to result to round up
+ 00000263  83 FA 00			cmp		edx, 0
+ 00000266  74 01			jz		NO_ROUND
+ 00000268  40				inc		eax
+ 00000269			NO_ROUND:
+ 00000269  EB 02			jmp		PRINT_RESULT
+
+ 0000026B			ODD_SIZE:
+ 0000026B  8B 07			mov		eax, [edi]
+
+ 0000026D			PRINT_RESULT:
+ 0000026D  8B 55 10			mov		edx, [ebp + 16]		
+ 00000270  E8 00000000 E		call	WriteString		; "The median is: "
+ 00000275  E8 00000000 E		call	WriteDec
+ 0000027A  E8 00000000 E		call	CrLf
+
+				; Clean up stack and return
+ 0000027F  5D				pop		ebp
+ 00000280  C2 000C			ret		12
+				; +------------------------------------------------------------+
+ 00000283			displayMedian ENDP
+				; +------------------------------------------------------------+
+
+
+				; +------------------------------------------------------------+
+ 00000283			displayList PROC
+				; Description:	Prints an array 10 values per row with a title
+				; Receives:		array (reference), request (value), title (reference)
+				; Returns:		None
+				; Pre:			None
+				; Reg Changed:	
+				; +------------------------------------------------------------+
+ 00000283  55				push	ebp
+ 00000284  8B EC			mov		ebp, esp
+
+				; Local variable to count how many items printed on row so far	
+ 00000286  83 EC 04			sub		esp, 4
+ 00000289  C7 45 FC			mov		DWORD PTR [ebp - 4], 0
+	   00000000
+
+				; Print header
+ 00000290  8B 55 10			mov		edx, [ebp + 16]
+ 00000293  E8 00000000 E		call	WriteString
+ 00000298  E8 00000000 E		call	CrLf
+
+				; Print the values (10 per row)
+ 0000029D  8B 7D 08			mov		edi, [ebp + 8]
+ 000002A0  8B 4D 0C			mov		ecx, [ebp + 12]
+ 000002A3			PRINT_VALS:	
+ 000002A3  8B 07			mov		eax, [edi]
+ 000002A5  E8 00000000 E		call	WriteDec
+ 000002AA  83 C7 04			add		edi, 4
+
+				; Print newline if this is the 10th item
+ 000002AD  FF 45 FC			inc		DWORD PTR [ebp - 4]
+ 000002B0  8B 45 FC			mov		eax, DWORD PTR [ebp - 4]
+ 000002B3  BB 0000000A			mov		ebx, 10
+ 000002B8  BA 00000000			mov		edx, 0
+ 000002BD  F7 F3			div		ebx
+ 000002BF  83 FA 00			cmp		edx, 0
+ 000002C2  74 09			jz		PRINT_NEW_LINE
+				; If not the 10th item, print a tab
+ 000002C4  B0 09			mov		al, 09d	; tab
+ 000002C6  E8 00000000 E		call	WriteChar
+ 000002CB  EB 0C			jmp		END_IF_ELSE
+
+ 000002CD			PRINT_NEW_LINE:
+ 000002CD  E8 00000000 E		call	CrLf
+ 000002D2  C7 45 FC			mov		DWORD PTR [ebp - 4], 0
+	   00000000
+
+ 000002D9			END_IF_ELSE:
+ 000002D9  E2 C8			loop	PRINT_VALS
+
+				; Add some whitespace after end
+ 000002DB  E8 00000000 E		call	CrLf
+ 000002E0  E8 00000000 E		call	CrLf
+
+				; Clean up stack and return
+ 000002E5  8B E5			mov		esp, ebp	; remove locals from stack
+ 000002E7  5D				pop		ebp
+ 000002E8  C2 000C			ret		12
+				; +------------------------------------------------------------+
+ 000002EB			displayList ENDP
+				; +------------------------------------------------------------+
+
 
 				END main
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    01/03/16 23:24:54
-#Program Template     (template.asm			     Symbols 2 - 1
+
+
+				; The below should not compile - tempalte for functions
+
+
+				; +------------------------------------------------------------+
+				someprocess PROC
+				; Description:	
+				;	
+				; Receives:		
+				; Returns:		
+				; Pre:			
+				; Reg Changed:	
+				; +------------------------------------------------------------+
+
+					
+					ret
+				; +------------------------------------------------------------+
+				someprocess ENDP
+				; +------------------------------------------------------------+
+
+
+
+
+
+
+
+				; sortList original attempt ... got too complicated and wasn't working (I think stack was messed up?)
+
+					k_loc EQU DWORD PTR [ebp - 4]
+					i_loc EQU DWORD PTR [ebp - 8]
+					j_loc EQU DWORD PTR [ebp - 12]
+					array_loc EQU DWORD PTR [ebp + 8]
+					request_loc EQU DWORD PTR [ebp + 12]
+
+					push	ebp
+					mov		ebp, esp
+					sub		esp, 12			; make room for local variables
+					mov		esi, array_loc	; esi points to the array
+
+				; for(k=0; k<request-1; k++)
+					mov		k_loc, 0		; k = 0
+					mov		ecx, request_loc
+					dec		ecx				; ecx = request-1
+
+				FOR_OUTER_START:	
+				;     i = k;
+					mov		eax, k_loc
+					mov		i_loc, eax
+
+				;     for(j=k+1; j<request; j++) {
+					mov		eax, k_loc
+					inc		eax					
+					mov		j_loc, eax			; j = k+1
+					mov		edx, request_loc	; edx = request
+
+				FOR_INNER_START:
+
+				; if(array[j] > array[i]), i = j, otherwise do nothing
+					mov		ebx, j_loc   
+					shl		ebx, 2				; scale j_loc value by 4
+					mov		eax, [esi + ebx]	; eax = array[j]
+					mov		ebx, i_loc
+					shl		ebx, 2				; scale i_loc value by 4
+					mov		ebx, [esi + ebx]	; ebx = array[i]
+					cmp		eax, ebx
+					jng		NO_UPDATE
+				; array[j] > array[i], so set i = j;
+					mov		eax, j_loc
+					mov		i_loc, eax
+
+				NO_UPDATE:
+					inc		j_loc
+					cmp		j_loc, edx
+					jl		FOR_INNER_START
+				; End of inner FOR loop
+
+				;        exchange(array[k], array[i]);	
+					mov		ebx, j_loc   
+					shl		ebx, 2				; scale j_loc value by 4
+					mov		eax, esi
+					add		eax, ebx			; TODO KEEP WITH THIS TRAIN OF THOUGHT
+					push	eax					; push the address of array[k]
+					mov		ebx, i_loc
+					shl		ebx, 2				; scale i_loc value by 4
+					mov		eax, esi			; ebx = array[i]
+					add		eax, ebx
+					push	eax
+
+					call	exchange
+
+				;	pop		ecx		; restore outer loop counter
+
+				; increment k and see if k<request-1
+					inc		k_loc
+					cmp		k_loc, ecx
+					jl		FOR_OUTER_START
+
+
+				; Clean up stack and return
+					mov		esp, ebp	; remove locals from stack
+					pop		ebp
+					ret		8
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/17/16 21:37:49
+3Programming Assignment 5    (project05-hillyer.asm	     Symbols 2 - 1
 
 
 
@@ -140,8 +927,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000000 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000007 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 000004D3 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000002EB Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -248,9 +1035,31 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000007 Public STDCALL
+displayList  . . . . . . . . . .	P Near	 00000283 _TEXT	Length= 00000068 Public STDCALL
+  PRINT_VALS . . . . . . . . . .	L Near	 000002A3 _TEXT	
+  PRINT_NEW_LINE . . . . . . . .	L Near	 000002CD _TEXT	
+  END_IF_ELSE  . . . . . . . . .	L Near	 000002D9 _TEXT	
+displayMedian  . . . . . . . . .	P Near	 00000223 _TEXT	Length= 00000060 Public STDCALL
+  NO_ROUND . . . . . . . . . . .	L Near	 00000269 _TEXT	
+  ODD_SIZE . . . . . . . . . . .	L Near	 0000026B _TEXT	
+  PRINT_RESULT . . . . . . . . .	L Near	 0000026D _TEXT	
+exchange . . . . . . . . . . . .	P Near	 00000208 _TEXT	Length= 0000001B Public STDCALL
+farewell . . . . . . . . . . . .	P Near	 00000143 _TEXT	Length= 0000001B Public STDCALL
+fillArray  . . . . . . . . . . .	P Near	 000001BC _TEXT	Length= 00000021 Public STDCALL
+  FILL_VALS  . . . . . . . . . .	L Near	 000001C5 _TEXT	
+getUserData  . . . . . . . . . .	P Near	 0000015E _TEXT	Length= 0000005E Public STDCALL
+  GET_INPUT  . . . . . . . . . .	L Near	 00000163 _TEXT	
+  OUT_OF_RANGE . . . . . . . . .	L Near	 000001A5 _TEXT	
+  IN_RANGE . . . . . . . . . . .	L Near	 000001B4 _TEXT	
+instructions . . . . . . . . . .	P Near	 000000E8 _TEXT	Length= 0000005B Public STDCALL
+introduction . . . . . . . . . .	P Near	 000000C0 _TEXT	Length= 00000028 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000C0 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
+sortList . . . . . . . . . . . .	P Near	 000001DD _TEXT	Length= 0000002B Public STDCALL
+  OUTER_LOOP . . . . . . . . . .	L Near	 000001E7 _TEXT	
+  INNER_LOOP . . . . . . . . . .	L Near	 000001EB _TEXT	
+  NO_SWAP  . . . . . . . . . . .	L Near	 000001F7 _TEXT	
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 
 
@@ -322,6 +1131,7 @@ HEAP_GROWABLE  . . . . . . . . .	Number	 00000002h
 HEAP_NO_SERIALIZE  . . . . . . .	Number	 00000001h   
 HEAP_REALLOC_IN_PLACE_ONLY . . .	Number	 00000010h   
 HEAP_ZERO_MEMORY . . . . . . . .	Number	 00000008h   
+HI . . . . . . . . . . . . . . .	Number	 000003E7h   
 IDABORT  . . . . . . . . . . . .	Number	 00000003h   
 IDCANCEL . . . . . . . . . . . .	Number	 00000002h   
 IDCLOSE  . . . . . . . . . . . .	Number	 00000008h   
@@ -340,6 +1150,8 @@ KEY_EVENT  . . . . . . . . . . .	Number	 00000001h
 KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh   
 LEFT_ALT_PRESSED . . . . . . . .	Number	 00000002h   
 LEFT_CTRL_PRESSED  . . . . . . .	Number	 00000008h   
+LO . . . . . . . . . . . . . . .	Number	 00000064h   
+MAX  . . . . . . . . . . . . . .	Number	 000000C8h   
 MB_ABORTRETRYIGNORE  . . . . . .	Number	 00000002h   
 MB_APPLMODAL . . . . . . . . . .	Number	 00000000h   
 MB_CANCELTRYCONTINUE . . . . . .	Number	 00000006h   
@@ -365,6 +1177,7 @@ MB_USERICON  . . . . . . . . . .	Number	 00000080h
 MB_YESNOCANCEL . . . . . . . . .	Number	 00000003h   
 MB_YESNO . . . . . . . . . . . .	Number	 00000004h   
 MENU_EVENT . . . . . . . . . . .	Number	 00000008h   
+MIN  . . . . . . . . . . . . . .	Number	 0000000Ah   
 MOUSE_EVENT  . . . . . . . . . .	Number	 00000002h   
 MessageBox . . . . . . . . . . .	Text   	 MessageBoxA
 NULL . . . . . . . . . . . . . .	Number	 00000000h   
@@ -467,13 +1280,25 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+arrSize  . . . . . . . . . . . .	Text   	 DWORD PTR [ebp + 24]
+arr_i  . . . . . . . . . . . . .	Text   	 DWORD PTR [ebp + 16]
+arr_j  . . . . . . . . . . . . .	Text   	 DWORD PTR [ebp + 20]
+array  . . . . . . . . . . . . .	DWord	 000001B3 _DATA	
+arr  . . . . . . . . . . . . . .	Text   	 DWORD PTR [ebp + 20]
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
+goodbye1 . . . . . . . . . . . .	Byte	 0000017D _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
+instructions_1 . . . . . . . . .	Byte	 00000036 _DATA	
+instructions_2 . . . . . . . . .	Byte	 0000006B _DATA	
+instructions_3 . . . . . . . . .	Byte	 00000070 _DATA	
+instructions_4 . . . . . . . . .	Byte	 00000073 _DATA	
+instructions_5 . . . . . . . . .	Byte	 000000B3 _DATA	
+intro  . . . . . . . . . . . . .	Byte	 00000000 _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -481,7 +1306,17 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
+medianTitle  . . . . . . . . . .	Byte	 0000016E _DATA	
+outOfRangeMsg  . . . . . . . . .	Byte	 00000132 _DATA	
+programmer . . . . . . . . . . .	Byte	 00000018 _DATA	
+rangeEnd . . . . . . . . . . . .	Byte	 000000F4 _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
+request  . . . . . . . . . . . .	DWord	 000001AF _DATA	
+sortedTitle  . . . . . . . . . .	Byte	 0000015D _DATA	
+unsortedTitle  . . . . . . . . .	Byte	 00000140 _DATA	
+valuePrompt_1  . . . . . . . . .	Byte	 00000101 _DATA	
+valuePrompt_2  . . . . . . . . .	Byte	 00000129 _DATA	
+valuePrompt_3  . . . . . . . . .	Byte	 0000012E _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   

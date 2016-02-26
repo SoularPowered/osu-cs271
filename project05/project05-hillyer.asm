@@ -400,6 +400,9 @@ sortList PROC USES ecx eax esi
 ; Returns:		array is sorted
 ; Pre:			array must be of at least size request
 ; Reg Changed:	
+; Reference Material Used: Bubble Sort algorithm in Irvine text
+; Page 374-375. I tried to notate comments to demonstrate I understand
+; how it eas implemented.
 ; +------------------------------------------------------------+
 	arr		EQU DWORD PTR [ebp + 20]
 	arrSize	EQU DWORD PTR [ebp + 24]

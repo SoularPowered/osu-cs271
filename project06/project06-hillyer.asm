@@ -1,4 +1,4 @@
-TITLE Programming Assignment 6    (project05-hillyer.asm)
+TITLE Programming Assignment 6    (project06-hillyer.asm)
 ; =====================================================================================
 ; Author:                  Shawn S Hillyer
 ; Email:                   hillyers@oregonstate.edu
