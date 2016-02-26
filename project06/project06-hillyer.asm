@@ -445,6 +445,14 @@ SUM_ARR:
 	add		[edi], eax
 	loop	SUM_ARR
 	
+; Now calculate the average
+	mov		eax, [edi]		; eax = sum, ebx = quantity
+	mov		edx, 0
+	mov		ebx, arrSize
+	div		ebx				; divide sum/size
+	mov		edi, arrAvg
+	mov		[edi], eax
+
 
 ; Clean up stack
 	pop		esi
