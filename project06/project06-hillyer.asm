@@ -169,12 +169,12 @@ ASCII_NINE = 57
 	pGoodbye		DWORD	OFFSET goodbye
 
 ; Data Variables
-	userData		DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
+	userData		DWORD	DATA_ARRAY_SIZE DUP(0)	; Array to store Unsigned Integers
 	userDataSize = ($ - userData)
 	pUserData		DWORD	OFFSET userData
 	
-	singleInt		DWORD	?
-	rawStringIn		BYTE	BUFFER_SIZE DUP(?)
+	singleInt		DWORD	0
+	rawStringIn		BYTE	BUFFER_SIZE DUP(0)
 	pRawStringIn	DWORD	rawStringIn
 	dataSum			DWORD	0		; The sum of the userData array
 	dataAvg			DWORD	0		; Average of the data stored in userData array
@@ -221,6 +221,9 @@ main PROC
 	
 ; Print the values entered
 	displayString pNumbersMsg
+	mov		eax, DATA_ARRAY_SIZE
+	push	eax
+	push	pUserData
 	call	CrLf
 	call	printArray
 	call	CrLf
@@ -396,7 +399,7 @@ FILL_ARR:
 	call	ReadVal
 ; DEBUG:
 	mov		eax, singleInt
-	stosb
+	stosd
 	loop	FILL_ARR
 
 ; Clean up stack and return
@@ -472,10 +475,15 @@ printArray PROC
 	push	ecx	
 
 ; Set up loop
+	cld
 	mov		ecx, arrSize
+	mov		esi, pNumArr
 	
 PRINT_ARR:
-	
+	lodsd
+	call	writedec
+	call	CrLf
+	loop	PRINT_ARR
 
 ; Clean up stack
 	pop		esi

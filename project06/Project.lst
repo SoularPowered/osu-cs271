@@ -1,8 +1,8 @@
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
-3Programming Assignment 6    (project05-hillyer.asm	     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 22:55:28
+3Programming Assignment 6    (project06-hillyer.asm	     Page 1 - 1
 
 
-				TITLE Programming Assignment 6    (project05-hillyer.asm)
+				TITLE Programming Assignment 6    (project06-hillyer.asm)
 				; =====================================================================================
 				; Author:                  Shawn S Hillyer
 				; Email:                   hillyers@oregonstate.edu
@@ -301,14 +301,14 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
  0000026D 0000023B R			pGoodbye		DWORD	OFFSET goodbye
 
 				; Data Variables
- 00000271  0000000A [			userData		DWORD	DATA_ARRAY_SIZE DUP(?)	; Array to store Unsigned Integers
+ 00000271  0000000A [			userData		DWORD	DATA_ARRAY_SIZE DUP(0)	; Array to store Unsigned Integers
 	    00000000
 	   ]
  00000299 = 00000028			userDataSize = ($ - userData)
  00000299 00000271 R			pUserData		DWORD	OFFSET userData
 					
- 0000029D 00000000			singleInt		DWORD	?
- 000002A1  00000028 [			rawStringIn		BYTE	BUFFER_SIZE DUP(?)
+ 0000029D 00000000			singleInt		DWORD	0
+ 000002A1  00000028 [			rawStringIn		BYTE	BUFFER_SIZE DUP(0)
 	    00
 	   ]
  000002C9 000002A1 R			pRawStringIn	DWORD	rawStringIn
@@ -352,7 +352,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
  00000034  B8 0000000A			mov		eax, DATA_ARRAY_SIZE
  00000039  50				push	eax			; arrSize
  0000003A  FF 35 00000299 R		push	pUserData	; pArr
- 00000040  E8 00000139			call	getUserData
+ 00000040  E8 00000145			call	getUserData
  00000045  E8 00000000 E		call	CrLF
 
 				; Calculate the sum and average of the array
@@ -361,7 +361,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
  00000054  B8 0000000A			mov		eax, DATA_ARRAY_SIZE
  00000059  50				push	eax
  0000005A  FF 35 00000299 R		push	pUserData
- 00000060  E8 00000142			call	sumAvgArray
+ 00000060  E8 0000014E			call	sumAvgArray
 					
 				; Print the values entered
 					displayString pNumbersMsg
@@ -369,47 +369,50 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
  00000066  8B 15 00000200 R  1		mov		edx, pNumbersMsg
  0000006C  E8 00000000 E     1		call	WriteString
  00000071  5A		     1		pop		edx
- 00000072  E8 00000000 E		call	CrLf
- 00000077  E8 00000146			call	printArray
- 0000007C  E8 00000000 E		call	CrLf
+ 00000072  B8 0000000A			mov		eax, DATA_ARRAY_SIZE
+ 00000077  50				push	eax
+ 00000078  FF 35 00000299 R		push	pUserData
+ 0000007E  E8 00000000 E		call	CrLf
+ 00000083  E8 00000146			call	printArray
+ 00000088  E8 00000000 E		call	CrLf
 
 				; Print the sum
 					displayString pSumMsg
- 00000081  52		     1		push	edx
- 00000082  8B 15 00000222 R  1		mov		edx, pSumMsg
- 00000088  E8 00000000 E     1		call	WriteString
- 0000008D  5A		     1		pop		edx
- 0000008E  A1 000002CD R		mov		eax, dataSum
- 00000093  E8 00000000 E		call	WriteDec
- 00000098  E8 00000000 E		call	CrLf
+ 0000008D  52		     1		push	edx
+ 0000008E  8B 15 00000222 R  1		mov		edx, pSumMsg
+ 00000094  E8 00000000 E     1		call	WriteString
+ 00000099  5A		     1		pop		edx
+ 0000009A  A1 000002CD R		mov		eax, dataSum
+ 0000009F  E8 00000000 E		call	WriteDec
+ 000000A4  E8 00000000 E		call	CrLf
 
 				; Print the average
 					displayString pAvgMsg
- 0000009D  52		     1		push	edx
- 0000009E  8B 15 00000237 R  1		mov		edx, pAvgMsg
- 000000A4  E8 00000000 E     1		call	WriteString
- 000000A9  5A		     1		pop		edx
- 000000AA  A1 000002D1 R		mov		eax, dataAvg
- 000000AF  E8 00000000 E		call	WriteDec
- 000000B4  E8 00000000 E		call	CrLf
+ 000000A9  52		     1		push	edx
+ 000000AA  8B 15 00000237 R  1		mov		edx, pAvgMsg
+ 000000B0  E8 00000000 E     1		call	WriteString
+ 000000B5  5A		     1		pop		edx
+ 000000B6  A1 000002D1 R		mov		eax, dataAvg
+ 000000BB  E8 00000000 E		call	WriteDec
+ 000000C0  E8 00000000 E		call	CrLf
 
 				; Print FareWell message
- 000000B9  E8 00000000 E		call	CrLf
+ 000000C5  E8 00000000 E		call	CrLf
 					displayString 	pGoodbye
- 000000BE  52		     1		push	edx
- 000000BF  8B 15 0000026D R  1		mov		edx, pGoodbye
- 000000C5  E8 00000000 E     1		call	WriteString
- 000000CA  5A		     1		pop		edx
- 000000CB  E8 00000000 E		call	CrLF
- 000000D0  E8 00000000 E		call	CrLF
+ 000000CA  52		     1		push	edx
+ 000000CB  8B 15 0000026D R  1		mov		edx, pGoodbye
+ 000000D1  E8 00000000 E     1		call	WriteString
+ 000000D6  5A		     1		pop		edx
+ 000000D7  E8 00000000 E		call	CrLF
+ 000000DC  E8 00000000 E		call	CrLF
 
 				; exit to operating system
 					exit	
- 000000D5  6A 00	   *	    push   +000000000h
- 000000D7  E8 00000000 E   *	    call   ExitProcess
+ 000000E1  6A 00	   *	    push   +000000000h
+ 000000E3  E8 00000000 E   *	    call   ExitProcess
 
 				; +------------------------------------------------------------+
- 000000DC			main ENDP
+ 000000E8			main ENDP
 				; +============================================================+
 
 
@@ -418,7 +421,7 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
 
 
 				; +============================================================+
- 000000DC			ReadVal PROC
+ 000000E8			ReadVal PROC
 				; Description:	Gets string of digits from user, then convert to
 				;               numeric and validate input.
 				; Receives:		@pStrBuffer (reference), @result (reference)
@@ -430,111 +433,111 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
  = [ebp + 12]				result		EQU [ebp + 12]
 
 					mSetStackFrame
- 000000DC  55		     1		push	ebp
- 000000DD  8B EC	     1		mov		ebp, esp
- 000000DF  50				push	eax
- 000000E0  53				push	ebx
- 000000E1  51				push	ecx
- 000000E2  52				push	edx
- 000000E3  56				push	esi
- 000000E4  57				push	edi
+ 000000E8  55		     1		push	ebp
+ 000000E9  8B EC	     1		mov		ebp, esp
+ 000000EB  50				push	eax
+ 000000EC  53				push	ebx
+ 000000ED  51				push	ecx
+ 000000EE  52				push	edx
+ 000000EF  56				push	esi
+ 000000F0  57				push	edi
 
 				; Get string from user, setup ESI to point to pStrBuffer for lodsb and ensure we're moving forward
 					getString	pValuePrompt, pStrBuffer
- 000000E5  52		     1		push	edx
- 000000E6  51		     1		push	ecx
- 000000E7  52		     2		push	edx
- 000000E8  8B 15 00000177 R  2		mov		edx, pValuePrompt
- 000000EE  E8 00000000 E     2		call	WriteString
- 000000F3  5A		     2		pop		edx
- 000000F4  8B 55 08	     1		mov		edx, pStrBuffer
- 000000F7  B9 00000028	     1		mov		ecx, BUFFER_SIZE 
- 000000FC  E8 00000000 E     1		call	ReadString
- 00000101  59		     1		pop		ecx
- 00000102  5A		     1		pop		edx
- 00000103			FRESH_STRING:
- 00000103  BB 00000000			mov			ebx, 0			; use ebx as accumulator because lodsb will overwrite eax
- 00000108  8B 75 08			mov			esi, pStrBuffer
+ 000000F1  52		     1		push	edx
+ 000000F2  51		     1		push	ecx
+ 000000F3  52		     2		push	edx
+ 000000F4  8B 15 00000177 R  2		mov		edx, pValuePrompt
+ 000000FA  E8 00000000 E     2		call	WriteString
+ 000000FF  5A		     2		pop		edx
+ 00000100  8B 55 08	     1		mov		edx, pStrBuffer
+ 00000103  B9 00000028	     1		mov		ecx, BUFFER_SIZE 
+ 00000108  E8 00000000 E     1		call	ReadString
+ 0000010D  59		     1		pop		ecx
+ 0000010E  5A		     1		pop		edx
+ 0000010F			FRESH_STRING:
+ 0000010F  BB 00000000			mov			ebx, 0			; use ebx as accumulator because lodsb will overwrite eax
+ 00000114  8B 75 08			mov			esi, pStrBuffer
 				; Convert digit string to numeric while validating user's input	
 
- 0000010B			CONVERT_STRING:
- 0000010B  AC				lodsb	 ; load next character from pStrBuffer into al
+ 00000117			CONVERT_STRING:
+ 00000117  AC				lodsb	 ; load next character from pStrBuffer into al
 				 
 				;f if character is 0, the null terminator for the string, then end of string - continue
- 0000010C  3C 00			cmp		al, 0
- 0000010E  74 28			jz		END_OF_STRING
+ 00000118  3C 00			cmp		al, 0
+ 0000011A  74 28			jz		END_OF_STRING
 
 				; else if character's ascii value is not between ascii 0 and ascii 9, reprompt for string	
- 00000110  3C 30			cmp		al, ASCII_ZERO
- 00000112  72 2D			jb		BAD_INPUT
- 00000114  3C 39			cmp		al, ASCII_NINE
- 00000116  77 29			ja		BAD_INPUT
+ 0000011C  3C 30			cmp		al, ASCII_ZERO
+ 0000011E  72 2D			jb		BAD_INPUT
+ 00000120  3C 39			cmp		al, ASCII_NINE
+ 00000122  77 29			ja		BAD_INPUT
 
 				; else do the conversion using algorithm and repeat loop
- 00000118  2C 30			sub		al, 48		; convert from ascii to numeric reprsentation
- 0000011A  0F B6 C8			movzx	ecx, al		; save char in safe spot and make it a DWORD at same time
+ 00000124  2C 30			sub		al, 48		; convert from ascii to numeric reprsentation
+ 00000126  0F B6 C8			movzx	ecx, al		; save char in safe spot and make it a DWORD at same time
 				; ebx = ebx * 10 + (digit) 
- 0000011D  8B C3			mov		eax, ebx	; eax = 'x'
- 0000011F  BA 00000000			mov		edx, 0
- 00000124  BF 0000000A			mov		edi, 10
- 00000129  F7 E7			mul		edi			
+ 00000129  8B C3			mov		eax, ebx	; eax = 'x'
+ 0000012B  BA 00000000			mov		edx, 0
+ 00000130  BF 0000000A			mov		edi, 10
+ 00000135  F7 E7			mul		edi			
 				; If overflow, the uer's integer is too large to fit
- 0000012B  83 FA 00			cmp		edx, 0
- 0000012E  75 11			JNZ		BAD_INPUT
- 00000130  03 C1			add		eax, ecx	
+ 00000137  83 FA 00			cmp		edx, 0
+ 0000013A  75 11			JNZ		BAD_INPUT
+ 0000013C  03 C1			add		eax, ecx	
 				; Check overflow again - addition might theoretically overflow too
- 00000132  72 0D			jc		BAD_INPUT
- 00000134  8B D8			mov		ebx, eax		; ebx now as the integer as calculated so far
- 00000136  EB D3			jmp		CONVERT_STRING
+ 0000013E  72 0D			jc		BAD_INPUT
+ 00000140  8B D8			mov		ebx, eax		; ebx now as the integer as calculated so far
+ 00000142  EB D3			jmp		CONVERT_STRING
 
- 00000138			END_OF_STRING:
+ 00000144			END_OF_STRING:
 				; finally compare it to the max int value and 
- 00000138  B8 FFFFFFFF			mov		eax, MAX_UNSIGNED_INT
- 0000013D  3B D8			cmp		ebx, eax
- 0000013F  71 25			jno		GOOD_INPUT
+ 00000144  B8 FFFFFFFF			mov		eax, MAX_UNSIGNED_INT
+ 00000149  3B D8			cmp		ebx, eax
+ 0000014B  71 25			jno		GOOD_INPUT
 
 				; if bad, reprompt:
- 00000141			BAD_INPUT:
+ 0000014D			BAD_INPUT:
 					getString	pBadInputMsg, pStrBuffer
- 00000141  52		     1		push	edx
- 00000142  51		     1		push	ecx
- 00000143  52		     2		push	edx
- 00000144  8B 15 000001D8 R  2		mov		edx, pBadInputMsg
- 0000014A  E8 00000000 E     2		call	WriteString
- 0000014F  5A		     2		pop		edx
- 00000150  8B 55 08	     1		mov		edx, pStrBuffer
- 00000153  B9 00000028	     1		mov		ecx, BUFFER_SIZE 
- 00000158  E8 00000000 E     1		call	ReadString
- 0000015D  59		     1		pop		ecx
- 0000015E  5A		     1		pop		edx
- 0000015F  E8 00000000 E		call		CrLF
- 00000164  EB 9D			jmp			FRESH_STRING
+ 0000014D  52		     1		push	edx
+ 0000014E  51		     1		push	ecx
+ 0000014F  52		     2		push	edx
+ 00000150  8B 15 000001D8 R  2		mov		edx, pBadInputMsg
+ 00000156  E8 00000000 E     2		call	WriteString
+ 0000015B  5A		     2		pop		edx
+ 0000015C  8B 55 08	     1		mov		edx, pStrBuffer
+ 0000015F  B9 00000028	     1		mov		ecx, BUFFER_SIZE 
+ 00000164  E8 00000000 E     1		call	ReadString
+ 00000169  59		     1		pop		ecx
+ 0000016A  5A		     1		pop		edx
+ 0000016B  E8 00000000 E		call		CrLF
+ 00000170  EB 9D			jmp			FRESH_STRING
 
- 00000166			GOOD_INPUT:
+ 00000172			GOOD_INPUT:
 
 				; return value by reference
- 00000166  8B 7D 0C			mov		edi, result
- 00000169  89 1F			mov		[edi], ebx  ; store the result in EBX to the location pointed at by eax, which is result
+ 00000172  8B 7D 0C			mov		edi, result
+ 00000175  89 1F			mov		[edi], ebx  ; store the result in EBX to the location pointed at by eax, which is result
 
 				; Clean up stack and return
- 0000016B  5F				pop		edi
- 0000016C  5E				pop		esi
- 0000016D  5A				pop		edx
- 0000016E  59				pop		ecx
- 0000016F  5B				pop		ebx
- 00000170  58				pop		eax
+ 00000177  5F				pop		edi
+ 00000178  5E				pop		esi
+ 00000179  5A				pop		edx
+ 0000017A  59				pop		ecx
+ 0000017B  5B				pop		ebx
+ 0000017C  58				pop		eax
 					mCleanStackFrame 8
- 00000171  8B E5	     1		mov		esp, ebp 
- 00000173  5D		     1		pop		ebp
- 00000174  C2 0008	     1		ret		8
+ 0000017D  8B E5	     1		mov		esp, ebp 
+ 0000017F  5D		     1		pop		ebp
+ 00000180  C2 0008	     1		ret		8
 
 				; +------------------------------------------------------------+
- 00000177			ReadVal ENDP
+ 00000183			ReadVal ENDP
 				; +============================================================+
 
 
 				; +============================================================+
- 00000177			WriteVal PROC
+ 00000183			WriteVal PROC
 				; Description:	Convert numeric value to a string of digits and
 				;	        invoke the displayString macro to produce output
 				; Receives:		
@@ -543,24 +546,24 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
 				; Reg Changed:	
 				; +------------------------------------------------------------+
 					mSetStackFrame
- 00000177  55		     1		push	ebp
- 00000178  8B EC	     1		mov		ebp, esp
+ 00000183  55		     1		push	ebp
+ 00000184  8B EC	     1		mov		ebp, esp
 
 
 				; Clean up stack and return
 					mCleanStackFrame
- 0000017A  8B E5	     1		mov		esp, ebp 
- 0000017C  5D		     1		pop		ebp
- 0000017D  C3		     1		ret		
+ 00000186  8B E5	     1		mov		esp, ebp 
+ 00000188  5D		     1		pop		ebp
+ 00000189  C3		     1		ret		
 
 				; +------------------------------------------------------------+
- 0000017E			WriteVal ENDP
+ 0000018A			WriteVal ENDP
 				; +============================================================+
 
 
 
 				; +============================================================+
- 0000017E			getUserData PROC
+ 0000018A			getUserData PROC
 				; Description:	
 				;	        
 				; Receives:		pNumArr: address of array to store values in
@@ -575,42 +578,42 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
  = [ebp + 16]				pStrArr		EQU	[ebp + 16]  ; the string used to store the user's input
 
 					mSetStackFrame
- 0000017E  55		     1		push	ebp
- 0000017F  8B EC	     1		mov		ebp, esp
- 00000181  50				push	eax
- 00000182  52				push	edx
+ 0000018A  55		     1		push	ebp
+ 0000018B  8B EC	     1		mov		ebp, esp
+ 0000018D  50				push	eax
+ 0000018E  52				push	edx
 					
 				; Set up loop
- 00000183  8B 4D 0C			mov		ecx, arrSize
- 00000186  8B 7D 08			mov		edi, pNumArr
+ 0000018F  8B 4D 0C			mov		ecx, arrSize
+ 00000192  8B 7D 08			mov		edi, pNumArr
 
- 00000189			FILL_ARR:
+ 00000195			FILL_ARR:
 				; Call ReadVal with 2 args
- 00000189  8B 55 10			mov		edx, pStrArr
- 0000018C  68 0000029D R		push	offset singleInt  ; singleInt pased by ref, gets return val by ref from ReadVal
- 00000191  52				push	edx				  ; pStrArr 
- 00000192  E8 FFFFFF45			call	ReadVal
+ 00000195  8B 55 10			mov		edx, pStrArr
+ 00000198  68 0000029D R		push	offset singleInt  ; singleInt pased by ref, gets return val by ref from ReadVal
+ 0000019D  52				push	edx				  ; pStrArr 
+ 0000019E  E8 FFFFFF45			call	ReadVal
 				; DEBUG:
- 00000197  A1 0000029D R		mov		eax, singleInt
- 0000019C  AA				stosb
- 0000019D  E2 EA			loop	FILL_ARR
+ 000001A3  A1 0000029D R		mov		eax, singleInt
+ 000001A8  AB				stosd
+ 000001A9  E2 EA			loop	FILL_ARR
 
 				; Clean up stack and return
- 0000019F  5A				pop		edx
- 000001A0  58				pop		eax
+ 000001AB  5A				pop		edx
+ 000001AC  58				pop		eax
 					mCleanStackFrame 12
- 000001A1  8B E5	     1		mov		esp, ebp 
- 000001A3  5D		     1		pop		ebp
- 000001A4  C2 000C	     1		ret		12
+ 000001AD  8B E5	     1		mov		esp, ebp 
+ 000001AF  5D		     1		pop		ebp
+ 000001B0  C2 000C	     1		ret		12
 
 				; +------------------------------------------------------------+
- 000001A7			getUserData ENDP
+ 000001B3			getUserData ENDP
 				; +============================================================+
 
 
 
 				; +============================================================+
- 000001A7			sumAvgArray PROC
+ 000001B3			sumAvgArray PROC
 				; Description:	Calculates the sum and average of an array
 				;	
 				; Receives:		@pNumArr - pointer to an array of unsigned integers
@@ -628,35 +631,35 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
 
 				; Setup Stack Frame	
 					mSetStackFrame
- 000001A7  55		     1		push	ebp
- 000001A8  8B EC	     1		mov		ebp, esp
- 000001AA  56				push	esi
- 000001AB  51				push	ecx	
+ 000001B3  55		     1		push	ebp
+ 000001B4  8B EC	     1		mov		ebp, esp
+ 000001B6  56				push	esi
+ 000001B7  51				push	ecx	
 
 				; Set up loop
- 000001AC  8B 4D 0C			mov		ecx, arrSize
- 000001AF  8B 75 08			mov		esi, pNumArr
- 000001B2  8B 7D 10			mov		edi, arrSum
+ 000001B8  8B 4D 0C			mov		ecx, arrSize
+ 000001BB  8B 75 08			mov		esi, pNumArr
+ 000001BE  8B 7D 10			mov		edi, arrSum
 					
- 000001B5			SUM_ARR:
- 000001B5  AD				lodsd		; load next value in array into EAX and increment ESI
- 000001B6  01 07			add		[edi], eax
- 000001B8  E2 FB			loop	SUM_ARR
+ 000001C1			SUM_ARR:
+ 000001C1  AD				lodsd		; load next value in array into EAX and increment ESI
+ 000001C2  01 07			add		[edi], eax
+ 000001C4  E2 FB			loop	SUM_ARR
 					
 
 				; Clean up stack
- 000001BA  5E				pop		esi
- 000001BB  59				pop		ecx
+ 000001C6  5E				pop		esi
+ 000001C7  59				pop		ecx
 					mCleanStackFrame 16
- 000001BC  8B E5	     1		mov		esp, ebp 
- 000001BE  5D		     1		pop		ebp
- 000001BF  C2 0010	     1		ret		16
+ 000001C8  8B E5	     1		mov		esp, ebp 
+ 000001CA  5D		     1		pop		ebp
+ 000001CB  C2 0010	     1		ret		16
 				; +------------------------------------------------------------+
- 000001C2			sumAvgArray ENDP
+ 000001CE			sumAvgArray ENDP
 				; +============================================================+
 
 				; +============================================================+
- 000001C2			printArray PROC
+ 000001CE			printArray PROC
 				; Description:	Calculates the sum and average of an array
 				;	
 				; Receives:		@pNumArr - pointer to an array of unsigned integers
@@ -672,26 +675,31 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
 
 				; Setup Stack Frame	
 					mSetStackFrame
- 000001C2  55		     1		push	ebp
- 000001C3  8B EC	     1		mov		ebp, esp
- 000001C5  56				push	esi
- 000001C6  51				push	ecx	
+ 000001CE  55		     1		push	ebp
+ 000001CF  8B EC	     1		mov		ebp, esp
+ 000001D1  56				push	esi
+ 000001D2  51				push	ecx	
 
 				; Set up loop
- 000001C7  8B 4D 0C			mov		ecx, arrSize
+ 000001D3  FC				cld
+ 000001D4  8B 4D 0C			mov		ecx, arrSize
+ 000001D7  8B 75 08			mov		esi, pNumArr
 					
- 000001CA			PRINT_ARR:
-					
+ 000001DA			PRINT_ARR:
+ 000001DA  AD				lodsd
+ 000001DB  E8 00000000 E		call	writedec
+ 000001E0  E8 00000000 E		call	CrLf
+ 000001E5  E2 F3			loop	PRINT_ARR
 
 				; Clean up stack
- 000001CA  5E				pop		esi
- 000001CB  59				pop		ecx
+ 000001E7  5E				pop		esi
+ 000001E8  59				pop		ecx
 					mCleanStackFrame 8
- 000001CC  8B E5	     1		mov		esp, ebp 
- 000001CE  5D		     1		pop		ebp
- 000001CF  C2 0008	     1		ret		8
+ 000001E9  8B E5	     1		mov		esp, ebp 
+ 000001EB  5D		     1		pop		ebp
+ 000001EC  C2 0008	     1		ret		8
 				; +------------------------------------------------------------+
- 000001D2			printArray ENDP
+ 000001EF			printArray ENDP
 				; +============================================================+
 
 
@@ -723,8 +731,8 @@ Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
 				someprocess ENDP
 				; +------------------------------------------------------------+
 
-Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 20:55:27
-3Programming Assignment 6    (project05-hillyer.asm	     Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 14.00.23506.0	    02/25/16 22:55:28
+3Programming Assignment 6    (project06-hillyer.asm	     Symbols 2 - 1
 
 
 
@@ -828,7 +836,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 000002D5 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000001D2 Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000001EF Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -898,12 +906,12 @@ ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-ReadVal  . . . . . . . . . . . .	P Near	 000000DC _TEXT	Length= 0000009B Public STDCALL
-  FRESH_STRING . . . . . . . . .	L Near	 00000103 _TEXT	
-  CONVERT_STRING . . . . . . . .	L Near	 0000010B _TEXT	
-  END_OF_STRING  . . . . . . . .	L Near	 00000138 _TEXT	
-  BAD_INPUT  . . . . . . . . . .	L Near	 00000141 _TEXT	
-  GOOD_INPUT . . . . . . . . . .	L Near	 00000166 _TEXT	
+ReadVal  . . . . . . . . . . . .	P Near	 000000E8 _TEXT	Length= 0000009B Public STDCALL
+  FRESH_STRING . . . . . . . . .	L Near	 0000010F _TEXT	
+  CONVERT_STRING . . . . . . . .	L Near	 00000117 _TEXT	
+  END_OF_STRING  . . . . . . . .	L Near	 00000144 _TEXT	
+  BAD_INPUT  . . . . . . . . . .	L Near	 0000014D _TEXT	
+  GOOD_INPUT . . . . . . . . . .	L Near	 00000172 _TEXT	
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -940,17 +948,17 @@ WriteStackFrameName  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-WriteVal . . . . . . . . . . . .	P Near	 00000177 _TEXT	Length= 00000007 Public STDCALL
+WriteVal . . . . . . . . . . . .	P Near	 00000183 _TEXT	Length= 00000007 Public STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-getUserData  . . . . . . . . . .	P Near	 0000017E _TEXT	Length= 00000029 Public STDCALL
-  FILL_ARR . . . . . . . . . . .	L Near	 00000189 _TEXT	
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000DC Public STDCALL
-printArray . . . . . . . . . . .	P Near	 000001C2 _TEXT	Length= 00000010 Public STDCALL
-  PRINT_ARR  . . . . . . . . . .	L Near	 000001CA _TEXT	
+getUserData  . . . . . . . . . .	P Near	 0000018A _TEXT	Length= 00000029 Public STDCALL
+  FILL_ARR . . . . . . . . . . .	L Near	 00000195 _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000E8 Public STDCALL
+printArray . . . . . . . . . . .	P Near	 000001CE _TEXT	Length= 00000021 Public STDCALL
+  PRINT_ARR  . . . . . . . . . .	L Near	 000001DA _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
-sumAvgArray  . . . . . . . . . .	P Near	 000001A7 _TEXT	Length= 0000001B Public STDCALL
-  SUM_ARR  . . . . . . . . . . .	L Near	 000001B5 _TEXT	
+sumAvgArray  . . . . . . . . . .	P Near	 000001B3 _TEXT	Length= 0000001B Public STDCALL
+  SUM_ARR  . . . . . . . . . . .	L Near	 000001C1 _TEXT	
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 
 
